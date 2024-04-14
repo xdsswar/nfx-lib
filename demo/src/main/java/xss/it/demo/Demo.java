@@ -52,8 +52,6 @@ public class Demo extends Application {
     @Override
     public void start(Stage stage) {
         NfxWindow window = new NfxWindow();
-        //window.initModality(Modality.APPLICATION_MODAL);
-        //window.setResizable(false);
         window.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/icon.png")).toExternalForm()));
         VBox box = new VBox();
         box.setAlignment(Pos.CENTER);
