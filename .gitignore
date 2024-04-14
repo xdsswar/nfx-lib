@@ -1,0 +1,8 @@
+/.idea/
+/.gradle/
+/gradle/
+/build/
+/*/build/
+/**/.idea/
+/nfx-core/src/native/cmake-build-debug-visual-studio/
+/nfx-core/src/native/cmake-build-release-visual-studio/

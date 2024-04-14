@@ -1,0 +1,53 @@
+plugins {
+    id 'org.openjfx.javafxplugin' version '0.0.13'
+}
+
+group 'xss.it.nfx'
+
+def jarName = 'nfx-core'
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+
+javafx {
+    version = '17.0.6'
+    modules = ['javafx.controls', 'javafx.graphics']
+}
+
+
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: '../libs')
+}
+
+jar{
+    archiveBaseName = jarName
+    manifest {
+        attributes(
+                'name' : jarName,
+                'version': version,
+                'description': 'Native JavaFX utility',
+                'author': 'Xtreme Software Solutions (XSS&IT)'
+        )
+    }
+}
+
+def jniHeaderOutputDir = file("$buildDir/headers")
+
+
+
+tasks.register('generateHeaders') {
+    dependsOn headers
+}
+
+tasks.register('headers', JavaCompile) {
+    source = sourceSets.main.java
+    classpath = sourceSets.main.runtimeClasspath
+    destinationDir = jniHeaderOutputDir
+    source('xss/it/nfx/**/*.java')
+    options.compilerArgs = [
+            "-h", jniHeaderOutputDir
+    ] as List<String>
+}
