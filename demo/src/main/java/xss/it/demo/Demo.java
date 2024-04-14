@@ -16,11 +16,14 @@ import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import xss.it.nfx.NfxWindow;
 
+import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -49,6 +52,9 @@ public class Demo extends Application {
     @Override
     public void start(Stage stage) {
         NfxWindow window = new NfxWindow();
+        window.initModality(Modality.APPLICATION_MODAL);
+        window.setResizable(false);
+        window.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/icon.png")).toExternalForm()));
         VBox box = new VBox();
         box.setAlignment(Pos.CENTER);
 
@@ -56,7 +62,7 @@ public class Demo extends Application {
         box.getChildren().add(button);
 
         box.setPrefSize(1000, 600);
-        window.setTitle("Custom TitleBar");
+        window.setTitle("Custom JavaFX Stage");
         window.setScene(new Scene(box));
         window.show();
 
@@ -105,7 +111,6 @@ public class Demo extends Application {
     @Override
     public void init() throws Exception {
         super.init();
-        //System.load("E:\\Development\\java\\nfx\\nfx-core\\src\\native\\cmake-build-release-visual-studio\\nfx-core-1.0.0.dll");
     }
 
     /**
