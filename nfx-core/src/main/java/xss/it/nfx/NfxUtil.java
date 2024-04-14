@@ -146,7 +146,7 @@ public class NfxUtil {
      * @param destPath  The destination path where the DLL file will be exported.
      * @throws IOException if an I/O error occurs during the export process.
      */
-    public static void exportDll(final String libName, String destPath) throws IOException {
+    private static void exportDll(final String libName, String destPath) throws IOException {
         File file=new File(destPath);
         if (file.exists()) {
             return;
@@ -169,7 +169,7 @@ public class NfxUtil {
      * @param folder String folder name to create
      * @return String
      */
-    public static String createDirs(String folder) {
+    private static String createDirs(String folder) {
         File baseDir = new File(_USER_DIR);
         File f = new File(baseDir, folder);
         if (!f.exists()) {
