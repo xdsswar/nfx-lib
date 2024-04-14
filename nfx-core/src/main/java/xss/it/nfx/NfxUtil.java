@@ -105,9 +105,15 @@ public class NfxUtil {
      */
     private static native void setTitleBarColor(long hWnd, double red, double green, double blue);
 
+    /**
+     * Sets the caption color of a window specified by its handle.
+     *
+     * @param hWnd   The handle of the window whose title bar color is to be set.
+     * @param red    The red component of the color
+     * @param green  The green component of the color
+     * @param blue   The blue component of the color
+     */
     private static native void setTextColor(long hWnd, double red, double green, double blue);
-
-
 
 
     /**
@@ -130,6 +136,7 @@ public class NfxUtil {
      * =================================================================================================================
      *
      *                                        Export dll utils
+     *                                         DO NOT TOUCH
      *
      * =================================================================================================================
      */

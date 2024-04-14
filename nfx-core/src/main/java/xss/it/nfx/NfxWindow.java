@@ -165,5 +165,4 @@ public final class NfxWindow extends Stage {
         setCaptionColor(NfxUtil.hexToColor(htmlColor));
     }
 
-
 }
