@@ -44,12 +44,22 @@ public final class NfxWindow extends Stage {
             if (getTitleBarColor()!=null) {
                 nfxUtil.setTitleBarColor(getTitleBarColor());
             }
+
+            if (getCaptionColor() != null){
+                nfxUtil.setCaptionColor(getCaptionColor());
+            }
         });
 
 
         titleBarColorProperty().addListener((obs, o, color) -> {
             if (color != null && nfxUtil != null){
                 nfxUtil.setTitleBarColor(color);
+            }
+        });
+
+        captionColorProperty().addListener((obs, o, color) -> {
+            if (color != null && nfxUtil != null){
+                nfxUtil.setCaptionColor(color);
             }
         });
     }
@@ -106,7 +116,53 @@ public final class NfxWindow extends Stage {
      * @param titleBarColor The color of the title bar.
      */
     public void setTitleBarColor(String titleBarColor) {
-        titleBarColorProperty().set(NfxUtil.hexToColor(titleBarColor));
+        setTitleBarColor(NfxUtil.hexToColor(titleBarColor));
+    }
+
+
+    /**
+     * Property representing the color of the window caption.
+     */
+    private ObjectProperty<Color> captionColor;
+
+    /**
+     * Retrieves the property representing the color of the window caption.
+     *
+     * @return The ObjectProperty representing the color of the window caption.
+     */
+    public ObjectProperty<Color> captionColorProperty(){
+        if (captionColor == null){
+            captionColor = new SimpleObjectProperty<>(this, "captionColor");
+        }
+        return captionColor;
+    }
+
+    /**
+     * Gets the color of the window caption.
+     *
+     * @return The color of the window caption.
+     */
+    public Color getCaptionColor() {
+        return captionColorProperty().get();
+    }
+
+    /**
+     * Sets the color of the window caption.
+     *
+     * @param captionColor The color of the window caption.
+     */
+    public void setCaptionColor(Color captionColor) {
+        captionColorProperty().set(captionColor);
+    }
+
+
+    /**
+     * Sets the color of the window caption.
+     *
+     * @param htmlColor The color of the window caption.
+     */
+    public void setCaptionColor(String htmlColor) {
+        setCaptionColor(NfxUtil.hexToColor(htmlColor));
     }
 
 

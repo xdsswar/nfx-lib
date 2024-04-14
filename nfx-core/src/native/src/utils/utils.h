@@ -32,4 +32,9 @@ COLORREF from_javafx_color(jdouble, jdouble, jdouble);
  */
 void set_title_bar_color(HWND , COLORREF);
 
+/**
+ * Sets the text color of a window specified by its handle.
+ */
+void set_text_color(HWND , COLORREF);
+
 #endif //UTILS_H

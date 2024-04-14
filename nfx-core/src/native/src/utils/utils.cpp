@@ -43,7 +43,22 @@ COLORREF from_javafx_color(const jdouble red, const jdouble green, const jdouble
     return RGB(r, g, b);
 }
 
+/**
+ * Sets the color of the title bar of a window specified by its handle.
+ *
+ * @param hWnd        The handle of the window whose title bar color is to be set.
+ * @param titleBarColor The color reference representing the active color of the title bar.
+ */
+void set_title_bar_color(HWND hWnd, COLORREF titleBarColor) {
+    DwmSetWindowAttribute(hWnd, DWMWA_CAPTION_COLOR, &titleBarColor, sizeof(titleBarColor));
+}
 
-void set_title_bar_color(HWND hWnd, COLORREF activeColor) {
-    DwmSetWindowAttribute(hWnd, DWMWA_CAPTION_COLOR, &activeColor, sizeof(activeColor));
+/**
+ * Sets the color of the title bar of a window specified by its handle.
+ *
+ * @param hWnd        The handle of the window whose title bar color is to be set.
+ * @param textColor The color reference representing the active color of the title bar.
+ */
+void set_text_color(HWND hWnd, COLORREF textColor) {
+    DwmSetWindowAttribute(hWnd, DWMWA_TEXT_COLOR, &textColor, sizeof(textColor));
 }

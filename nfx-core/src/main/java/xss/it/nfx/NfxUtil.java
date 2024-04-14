@@ -65,6 +65,27 @@ public class NfxUtil {
         setTitleBarColor(hexToColor(hexColor));
     }
 
+
+    /**
+     * Sets the color of the title bar of the window using RGB color values.
+     *
+     * @param color The color object representing the desired title bar color.
+     */
+    public void setCaptionColor(Color color){
+        setTextColor(hWnd, color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    /**
+     * Sets the text color of the window using a hexadecimal color string.
+     *
+     * @param hexColor The hexadecimal color string representing the desired title bar color.
+     */
+    public void setCaptionColor(String hexColor){
+        setCaptionColor(hexToColor(hexColor));
+    }
+
+
+
     /**
      * Retrieves the native handle of the specified window object.
      *
@@ -83,6 +104,10 @@ public class NfxUtil {
      * @param blue   The blue component of the color
      */
     private static native void setTitleBarColor(long hWnd, double red, double green, double blue);
+
+    private static native void setTextColor(long hWnd, double red, double green, double blue);
+
+
 
 
     /**

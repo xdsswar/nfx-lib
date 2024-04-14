@@ -34,3 +34,15 @@ JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTitleBarColor
     HWND _hwnd = to_hwnd(hWnd);
     set_title_bar_color(_hwnd, from_javafx_color(red, green, blue));
 }
+
+/*
+ * Class:     xss_it_nfx_NfxUtil
+ * Method:    setTextColor
+ * Signature: (JDDD)V
+ */
+extern "C"
+JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTextColor
+(JNIEnv *env, jclass cls, jlong hWnd, jdouble red, jdouble green, jdouble blue){
+    HWND _hwnd = to_hwnd(hWnd);
+    set_text_color(_hwnd, from_javafx_color(red, green, blue));
+}

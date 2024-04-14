@@ -67,6 +67,8 @@ public class Demo extends Application {
 
         });
 
+
+
     }
 
     public static Color generateRandomColor() {

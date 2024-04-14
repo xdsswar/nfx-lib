@@ -13,7 +13,7 @@ extern "C" {
  * Signature: (Ljava/lang/Object;)J
  */
 JNIEXPORT jlong JNICALL Java_xss_it_nfx_NfxUtil_getNativeHandle
-  (JNIEnv *, jclass, jobject);
+(JNIEnv *, jclass, jobject);
 
 /*
  * Class:     xss_it_nfx_NfxUtil
@@ -21,7 +21,15 @@ JNIEXPORT jlong JNICALL Java_xss_it_nfx_NfxUtil_getNativeHandle
  * Signature: (JDDD)V
  */
 JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTitleBarColor
-  (JNIEnv *, jclass, jlong, jdouble, jdouble, jdouble);
+(JNIEnv *, jclass, jlong, jdouble, jdouble, jdouble);
+
+/*
+* Class:     xss_it_nfx_NfxUtil
+* Method:    setTextColor
+* Signature: (JDDD)V
+*/
+JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTextColor
+(JNIEnv *, jclass, jlong, jdouble, jdouble, jdouble);
 
 #ifdef __cplusplus
 }
