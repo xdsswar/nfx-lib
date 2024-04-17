@@ -21,11 +21,11 @@ import javafx.stage.Stage;
  * @author XDSSWAR
  * Created on 04/13/2024
  */
-public final class NfxWindow extends Stage {
+public  class NfxWindow extends Stage {
     /**
      * The NfxUtil instance for handling native window operations.
      */
-    private NfxUtil nfxUtil = null;
+    protected NfxUtil nfxUtil = null;
 
     /**
      * Constructs a new NfxWindow instance.

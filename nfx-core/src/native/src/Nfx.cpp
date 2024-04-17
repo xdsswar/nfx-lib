@@ -35,10 +35,15 @@ JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTitleBarColor
     set_title_bar_color(_hwnd, from_javafx_color(red, green, blue));
 }
 
-/*
- * Class:     xss_it_nfx_NfxUtil
- * Method:    setTextColor
- * Signature: (JDDD)V
+/**
+ * Sets the color of the title in a native window.
+ *
+ * @param env   The JNI environment.
+ * @param cls   The Java class reference.
+ * @param hWnd  The native handle of the window.
+ * @param red   The red component of the color
+ * @param green The green component of the color
+ * @param blue  The blue component of the color
  */
 extern "C"
 JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTextColor
@@ -46,3 +51,4 @@ JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTextColor
     HWND _hwnd = to_hwnd(hWnd);
     set_text_color(_hwnd, from_javafx_color(red, green, blue));
 }
+

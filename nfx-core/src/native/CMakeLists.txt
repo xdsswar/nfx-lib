@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-set(THIS_LIB "nfx-core")
+set(THIS_LIB "nfx-core-win64")
 
 project(${THIS_LIB})
 
@@ -29,5 +29,7 @@ add_library(${THIS_LIB}-${VERSION} SHARED
         src/utils/utils.cpp
         src/Nfx.cpp
         src/jni_h/xss_it_nfx_NfxUtil.h
+        src/utils/HwndMap.cpp
+        src/utils/HwndMap.h
 
 )
