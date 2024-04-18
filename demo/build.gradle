@@ -11,7 +11,8 @@ repositories {
 }
 
 application {
-    mainClass ='xss.it.demo.Demo'
+    mainClass ='xss.it.demo.Undecorated'
+    //mainClass ='xss.it.demo.Demo'
 }
 
 

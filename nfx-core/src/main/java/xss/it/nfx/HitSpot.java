@@ -157,7 +157,9 @@ public final class HitSpot {
         return Rect.createFromBounds(control.localToScene(control.getBoundsInLocal()));
     }
 
-
+    /**
+     * Builder
+     */
     public final static class Builder {
         /**
          * The Node control for the HitSpot.

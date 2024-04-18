@@ -14,24 +14,57 @@ package xss.it.nfx;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 /**
  * @author XDSSWAR
  * Created on 04/13/2024
  */
 public  class NfxWindow extends Stage {
-    /**
-     * The NfxUtil instance for handling native window operations.
-     */
-    protected NfxUtil nfxUtil = null;
+
+    private final ObjectProperty<NfxUtil> nfxUtil;
+
+    private final EventHandler<WindowEvent> LISTENER = windowEvent -> {
+        ensureNfx();
+        if (getTitleBarColor()!=null) {
+            getNfxUtil().setTitleBarColor(getTitleBarColor());
+        }
+
+        if (getCaptionColor() != null){
+            getNfxUtil().setCaptionColor(getCaptionColor());
+        }
+
+        getNfxUtil().setCornerPref(getCornerPreference());
+        cornerPreferenceProperty().addListener((obs1, o1, pref) ->{
+            getNfxUtil().setCornerPref(pref);
+            invalidateSpots();
+        });
+
+        getNfxUtil().setBorderColor(getWindowBorder());
+        windowBorderProperty().addListener((obs1, o1, border) -> {
+            getNfxUtil().setBorderColor(border);
+            invalidateSpots();
+        });
+
+        widthProperty().addListener((obs,o, n) -> {
+            update(isMaximized(), isFullScreen());//New update, keep eye
+            invalidateSpots();
+        });
+        heightProperty().addListener((obs,o, n) -> {
+            update(isMaximized(), isFullScreen());//New update, keep eye
+            invalidateSpots();
+        });
+    };
 
     /**
      * Constructs a new NfxWindow instance.
      */
     public NfxWindow() {
         super();
+        nfxUtil = new SimpleObjectProperty<>(this, "nfxUtil", null);
         initialize();
     }
 
@@ -39,29 +72,38 @@ public  class NfxWindow extends Stage {
      * Initializes the NfxWindow.
      */
     private void initialize(){
-        setOnShown(windowEvent -> {
-            ensureNfx();
-            if (getTitleBarColor()!=null) {
-                nfxUtil.setTitleBarColor(getTitleBarColor());
-            }
-
-            if (getCaptionColor() != null){
-                nfxUtil.setCaptionColor(getCaptionColor());
-            }
-        });
-
+        setOnShown(LISTENER);
 
         titleBarColorProperty().addListener((obs, o, color) -> {
             if (color != null && nfxUtil != null){
-                nfxUtil.setTitleBarColor(color);
+                getNfxUtil().setTitleBarColor(color);
             }
         });
 
         captionColorProperty().addListener((obs, o, color) -> {
             if (color != null && nfxUtil != null){
-                nfxUtil.setCaptionColor(color);
+                getNfxUtil().setCaptionColor(color);
             }
         });
+    }
+
+
+    /**
+     * Returns the property for accessing NfxUtil.
+     *
+     * @return The property for NfxUtil
+     */
+    protected final ObjectProperty<NfxUtil> nfxUtilProperty() {
+        return nfxUtil;
+    }
+
+    /**
+     * Returns the NfxUtil instance.
+     *
+     * @return The NfxUtil instance
+     */
+    protected NfxUtil getNfxUtil() {
+        return nfxUtilProperty().get();
     }
 
 
@@ -70,8 +112,8 @@ public  class NfxWindow extends Stage {
      * If not initialized, creates a new instance.
      */
     private void ensureNfx(){
-        if (nfxUtil == null){
-            nfxUtil = new NfxUtil(this);
+        if (getNfxUtil() == null){
+            nfxUtilProperty().set(new NfxUtil(this));
         }
     }
 
@@ -85,7 +127,7 @@ public  class NfxWindow extends Stage {
      *
      * @return The ObjectProperty representing the color of the title bar.
      */
-    public ObjectProperty<Color> titleBarColorProperty(){
+    public final ObjectProperty<Color> titleBarColorProperty(){
         if (titleBarColor == null){
             titleBarColor = new SimpleObjectProperty<>(this, "titleBarColor");
         }
@@ -97,7 +139,7 @@ public  class NfxWindow extends Stage {
      *
      * @return The color of the title bar.
      */
-    public Color getTitleBarColor() {
+    public final Color getTitleBarColor() {
         return titleBarColorProperty().get();
     }
 
@@ -106,7 +148,7 @@ public  class NfxWindow extends Stage {
      *
      * @param titleBarColor The color of the title bar.
      */
-    public void setTitleBarColor(Color titleBarColor) {
+    public final void setTitleBarColor(Color titleBarColor) {
         titleBarColorProperty().set(titleBarColor);
     }
 
@@ -115,7 +157,7 @@ public  class NfxWindow extends Stage {
      *
      * @param titleBarColor The color of the title bar.
      */
-    public void setTitleBarColor(String titleBarColor) {
+    public final void setTitleBarColor(String titleBarColor) {
         setTitleBarColor(NfxUtil.hexToColor(titleBarColor));
     }
 
@@ -130,7 +172,7 @@ public  class NfxWindow extends Stage {
      *
      * @return The ObjectProperty representing the color of the window caption.
      */
-    public ObjectProperty<Color> captionColorProperty(){
+    public final ObjectProperty<Color> captionColorProperty(){
         if (captionColor == null){
             captionColor = new SimpleObjectProperty<>(this, "captionColor");
         }
@@ -142,7 +184,7 @@ public  class NfxWindow extends Stage {
      *
      * @return The color of the window caption.
      */
-    public Color getCaptionColor() {
+    public final Color getCaptionColor() {
         return captionColorProperty().get();
     }
 
@@ -151,7 +193,7 @@ public  class NfxWindow extends Stage {
      *
      * @param captionColor The color of the window caption.
      */
-    public void setCaptionColor(Color captionColor) {
+    public final void setCaptionColor(Color captionColor) {
         captionColorProperty().set(captionColor);
     }
 
@@ -161,8 +203,93 @@ public  class NfxWindow extends Stage {
      *
      * @param htmlColor The color of the window caption.
      */
-    public void setCaptionColor(String htmlColor) {
+    public final void setCaptionColor(String htmlColor) {
         setCaptionColor(NfxUtil.hexToColor(htmlColor));
     }
 
+    /**
+     * Property representing the corner preference for window corners.
+     */
+    private ObjectProperty<CornerPreference> cornerPreference;
+
+    /**
+     * Returns the ObjectProperty representing the corner preference for window corners.
+     * If not already initialized, it creates a new ObjectProperty with a default value of CornerPreference.DEFAULT.
+     *
+     * @return The ObjectProperty for cornerPreference.
+     */
+    public final ObjectProperty<CornerPreference> cornerPreferenceProperty() {
+        if (cornerPreference == null) {
+            cornerPreference = new SimpleObjectProperty<>(this, "cornerPreference", CornerPreference.DEFAULT);
+        }
+        return cornerPreference;
+    }
+
+    /**
+     * Gets the corner preference for window corners.
+     *
+     * @return The corner preference.
+     */
+    public final CornerPreference getCornerPreference() {
+        return cornerPreferenceProperty().get();
+    }
+
+    /**
+     * Sets the corner preference for window corners.
+     *
+     * @param cornerPreference The corner preference to set.
+     */
+    public final void setCornerPreference(CornerPreference cornerPreference) {
+        this.cornerPreferenceProperty().set(cornerPreference);
+    }
+
+    /**
+     * Property representing the window's border color.
+     */
+    private ObjectProperty<Color> windowBorder;
+
+    /**
+     * Returns the ObjectProperty representing the window's border color.
+     * If not already initialized, it creates a new ObjectProperty with no default value.
+     *
+     * @return The ObjectProperty for windowBorder.
+     */
+    public final ObjectProperty<Color> windowBorderProperty() {
+        if (windowBorder == null) {
+            windowBorder = new SimpleObjectProperty<>(this, "windowBorder");
+        }
+        return windowBorder;
+    }
+
+    /**
+     * Gets the window's border color.
+     *
+     * @return The window's border color.
+     */
+    public final Color getWindowBorder() {
+        return windowBorderProperty().get();
+    }
+
+    /**
+     * Sets the window's border color.
+     *
+     * @param windowBorder The border color to set.
+     */
+    public final void setWindowBorder(Color windowBorder) {
+        this.windowBorderProperty().set(windowBorder);
+    }
+
+    /**
+     * Invalidates the spots, triggering a refresh or update in the spot-related components.
+     * This method should be overridden in subclasses to implement specific invalidation logic.
+     */
+    protected void invalidateSpots(){}
+
+    /**
+     * Updates the window state based on the provided parameters.
+     *
+     * @param max  Whether the window should be maximized.
+     * @param full Whether the window should be in full-screen mode.
+     */
+    protected void update(boolean max, boolean full){}
 }

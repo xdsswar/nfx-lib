@@ -1,4 +1,4 @@
-package com.sun.it.nfx;
+package xss.it.nfx;
 
 /**
  * @author XDSSWAR
