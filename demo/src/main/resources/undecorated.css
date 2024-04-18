@@ -36,3 +36,51 @@
 .shape-close-hovered{
     -fx-fill: #F9F9F9;
 }
+
+
+.menu-bar{
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-min-height: 30;
+    -fx-alignment: CENTER-LEFT;
+}
+
+menu{
+    -fx-background-color: #F3F3F3;
+    -fx-text-fill: #2C3E50;
+}
+
+.context-menu .menu-item:hover, .context-menu .menu .menu-item:hover,
+.context-menu .menu:hover, .context-menu .menu:showing,
+.menu-bar .menu:hover, .menu-bar .menu:showing{
+    -fx-background-color: #3498DB;
+    -fx-text-fill: #F3F3F3;
+}
+
+.context-menu .menu-item:hover .icons, .context-menu .menu .menu-item:hover .icons,
+.context-menu .menu-item:focused .icons, .context-menu .menu .menu-item:focused .icons,
+.context-menu .menu:hover .icons{
+    -fx-fill: #F3F3F3;
+}
+
+
+.context-menu{
+    -fx-background-insets: 0;
+    -fx-padding: 4;
+    -fx-background-radius: 2;
+    -fx-border-radius: 2;
+    -fx-min-width: 140;
+}
+
+.menu{
+    -fx-padding: 4 12 4 12;
+    -fx-background-insets: 0;
+}
+
+.menu,
+.menu-item{
+    -fx-background-radius: 2;
+    -fx-border-radius: 2;
+    -fx-font-size: 13;
+}
+

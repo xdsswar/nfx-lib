@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="405.0" prefWidth="701.0" styleClass="base" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane prefHeight="576.0" prefWidth="1000.0" styleClass="base" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox alignment="CENTER" layoutX="253.0" layoutY="141.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -22,6 +22,11 @@
                </VBox.margin>
             </Button>
             <Button fx:id="openCustomDialogHiddenFromTaskBarBtn" layoutX="201.0" layoutY="248.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="480.0" text="Open Custom Dialog Hidden from TaskBar">
+               <VBox.margin>
+                  <Insets top="20.0" />
+               </VBox.margin>
+            </Button>
+            <Button fx:id="menuFxWindowBtn" layoutX="270.0" layoutY="373.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="480.0" text="Open Menu NfxWIndow">
                <VBox.margin>
                   <Insets top="20.0" />
                </VBox.margin>

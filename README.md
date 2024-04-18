@@ -38,6 +38,10 @@ Here are some visual examples of what `nfx-core` can do:
    Demonstrates a custom dialog that can be hidden or shown in the taskbar  
    ![Custom Dialog](screenshots/3.png)
 
+4. **Custom Dialog**  
+   MenuWindow Demo  
+   ![Custom Dialog](screenshots/4.png)
+
 For more examples and in-depth usage, check out our demo.
 
 ## Important Note
