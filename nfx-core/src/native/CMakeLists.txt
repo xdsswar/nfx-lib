@@ -31,5 +31,8 @@ add_library(${THIS_LIB}-${VERSION} SHARED
         src/jni_h/xss_it_nfx_NfxUtil.h
         src/utils/HwndMap.cpp
         src/utils/HwndMap.h
+        src/utils/NfxWinProc.h
+        src/jni_h/xss_it_nfx_AbstractNfxUndecoratedWindow.h
+        src/NfxAbstract.cpp
 
 )
