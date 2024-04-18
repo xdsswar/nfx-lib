@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-<AnchorPane prefHeight="286.0" prefWidth="560.0" styleClass="base" stylesheets="@dialog.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane prefHeight="286.0" prefWidth="560.0" styleClass="base" stylesheets="@dialog.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <AnchorPane layoutX="302.0" layoutY="-8.0" prefHeight="80.0" prefWidth="240.0" rotate="41.6" styleClass="side" AnchorPane.rightAnchor="-108.0" AnchorPane.topAnchor="-8.0" />
       <AnchorPane layoutX="-106.0" layoutY="226.0" prefHeight="80.0" prefWidth="240.0" rotate="41.6" styleClass="side" AnchorPane.bottomAnchor="-50.0" AnchorPane.leftAnchor="-90.0" />
