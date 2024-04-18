@@ -11,8 +11,7 @@ repositories {
 }
 
 application {
-    mainClass ='xss.it.demo.Undecorated'
-    //mainClass ='xss.it.demo.Demo'
+    mainClass ='xss.it.demo.Demo'
 }
 
 
@@ -23,7 +22,7 @@ tasks.withType(JavaCompile).configureEach {
 
 javafx {
     version = '17.0.6'
-    modules = ['javafx.controls', 'javafx.graphics']
+    modules = ['javafx.controls', 'javafx.graphics', "javafx.fxml"]
 }
 
 

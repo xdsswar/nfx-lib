@@ -13,6 +13,7 @@
 package xss.it.nfx;
 
 import com.sun.it.nfx.Rect;
+import com.sun.it.nfx.RestartableTimer;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -25,6 +26,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.WindowEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,6 +75,17 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
     public static final EventType<WindowEvent> BACKGROUND_CHANGE = new EventType<>(Event.ANY, "BACKGROUND_CHANGE");
 
     /**
+     * Custom times to handel hitSpot events
+     */
+    private RestartableTimer timer;
+
+    /**
+     * HitSpots
+     */
+    private final List<HitSpot> HIT_SPOTS;
+
+
+    /**
      * Constructs a new AbstractNfxUndecoratedWindow with default settings.
      * Calls the constructor with the parameter 'hideFromTaskBar' set to false.
      */
@@ -88,6 +101,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      */
     public AbstractNfxUndecoratedWindow(boolean hideFromTaskBar){
         super();
+        HIT_SPOTS = new ArrayList<>();
         initialize();
         setHideFromTaskBar(hideFromTaskBar);
     }
@@ -158,6 +172,9 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                     invalidateSpots();
                     update(isMaximized(), isFullScreen());
                 });
+
+
+                updateHitSpots();
             }
         });
     }
@@ -272,6 +289,21 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
     }
 
     /**
+     * Updates the hit spots in the window.
+     */
+    private void updateHitSpots(){
+        if (timer!=null){
+            timer.restart();
+            return;
+        }
+        timer = new RestartableTimer(300, event -> {
+            HIT_SPOTS.clear();
+            HIT_SPOTS.addAll(getHitSpots());
+        });
+        timer.start();
+    }
+
+    /**
      * Handles the window state change.
      *
      * @param state The new window state
@@ -377,7 +409,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
 
         boolean isOnTitleBar = sy < getTitleBarHeight();
 
-        for (HitSpot spot : getHitSpots()) {
+        for (HitSpot spot : HIT_SPOTS) {
             if (contains(spot.getRect(), sx, sy)) {
                 if (spot.isSystemMenu()) {//system menu
                     spot.setHovered(true);
@@ -501,7 +533,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * Invalidates the hit spots by setting their hover state to false.
      */
     public final void invalidateSpots(){
-        getHitSpots().forEach(hitSpot -> hitSpot.setHovered(false));
+        HIT_SPOTS.forEach(hitSpot -> hitSpot.setHovered(false));
     }
 
 }

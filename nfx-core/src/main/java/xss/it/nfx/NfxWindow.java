@@ -24,9 +24,16 @@ import javafx.stage.WindowEvent;
  * Created on 04/13/2024
  */
 public  class NfxWindow extends Stage {
-
+    /**
+     * A private member representing an ObjectProperty of type NfxUtil.
+     * This ObjectProperty holds a reference to an instance of the NfxUtil class.
+     */
     private final ObjectProperty<NfxUtil> nfxUtil;
 
+    /**
+     * A private final member representing an EventHandler for WindowEvent.
+     * This EventHandler listens for WindowEvents and handles them accordingly.
+     */
     private final EventHandler<WindowEvent> LISTENER = windowEvent -> {
         ensureNfx();
         if (getTitleBarColor()!=null) {
@@ -57,6 +64,18 @@ public  class NfxWindow extends Stage {
             update(isMaximized(), isFullScreen());//New update, keep eye
             invalidateSpots();
         });
+
+        titleBarColorProperty().addListener((obs, o, color) -> {
+            if (color != null && getNfxUtil() != null){
+                getNfxUtil().setTitleBarColor(color);
+            }
+        });
+
+        captionColorProperty().addListener((obs, o, color) -> {
+            if (color != null && getNfxUtil() != null){
+                getNfxUtil().setCaptionColor(color);
+            }
+        });
     };
 
     /**
@@ -73,18 +92,6 @@ public  class NfxWindow extends Stage {
      */
     private void initialize(){
         setOnShown(LISTENER);
-
-        titleBarColorProperty().addListener((obs, o, color) -> {
-            if (color != null && nfxUtil != null){
-                getNfxUtil().setTitleBarColor(color);
-            }
-        });
-
-        captionColorProperty().addListener((obs, o, color) -> {
-            if (color != null && nfxUtil != null){
-                getNfxUtil().setCaptionColor(color);
-            }
-        });
     }
 
 

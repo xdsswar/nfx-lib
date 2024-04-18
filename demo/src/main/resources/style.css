@@ -1,0 +1,33 @@
+.base{
+    -fx-background-color: #464646;
+}
+
+.label{
+    -fx-font-size: 20;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+.button{
+    -fx-background-insets: 0;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-font-size: 18;
+    -fx-background-color: #002E62;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #002E62;
+}
+
+.button:hover{
+    -fx-background-color: #044288;
+    -fx-border-color: #044288;
+    -fx-text-fill: #bbb8b8;
+    -fx-cursor: hand;
+}
+
+.button:armed{
+    -fx-background-color: #002E62;
+    -fx-border-color: #002E62;
+    -fx-text-fill: #ffffff;
+    -fx-cursor: hand;
+}

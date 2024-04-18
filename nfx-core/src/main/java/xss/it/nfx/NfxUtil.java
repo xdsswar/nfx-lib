@@ -22,7 +22,7 @@ import java.nio.file.FileSystems;
  * @author XDSSWAR
  * Created on 04/13/2024
  */
-final class NfxUtil {
+public final class NfxUtil {
     /**
      * Represents a default window composition parameter.
      */

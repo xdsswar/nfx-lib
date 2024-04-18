@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+
+<AnchorPane prefHeight="286.0" prefWidth="560.0" styleClass="base" stylesheets="@dialog.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <AnchorPane layoutX="302.0" layoutY="-8.0" prefHeight="80.0" prefWidth="240.0" rotate="41.6" styleClass="side" AnchorPane.rightAnchor="-108.0" AnchorPane.topAnchor="-8.0" />
+      <AnchorPane layoutX="-106.0" layoutY="226.0" prefHeight="80.0" prefWidth="240.0" rotate="41.6" styleClass="side" AnchorPane.bottomAnchor="-50.0" AnchorPane.leftAnchor="-90.0" />
+      <VBox alignment="CENTER" layoutX="230.0" layoutY="43.0" prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="40.0" AnchorPane.rightAnchor="40.0" AnchorPane.topAnchor="40.0">
+         <children>
+            <Label text="Custom Nfx Dialog" />
+         </children>
+      </VBox>
+      <Button fx:id="closeBtn" mnemonicParsing="false" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <graphic>
+            <SVGPath content="M3.726563 3.023438L3.023438 3.726563L7.292969 8L3.023438 12.269531L3.726563 12.980469L8 8.707031L12.269531 12.980469L12.980469 12.269531L8.707031 8L12.980469 3.726563L12.269531 3.023438L8 7.292969Z" styleClass="btn-shape" />
+         </graphic>
+      </Button>
+   </children>
+</AnchorPane>

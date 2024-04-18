@@ -1,0 +1,38 @@
+.base{
+    -fx-background-color: #F3F3F3;
+}
+
+.left-pane{
+    -fx-background-color: #06603A;
+}
+
+.hit-btn{
+    -fx-min-width: 40;
+    -fx-max-width: 40;
+    -fx-pref-width: 40;
+    -fx-min-height: 22;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-background-color: #F3F3F3;
+}
+
+.hit-hovered,
+.hit-btn:hover{
+    -fx-background-color: rgba(150, 150, 150, 0.32);
+}
+
+.hit-close-btn,
+.hit-close:hover{
+    -fx-background-color: #C42B1C;
+    -fx-text-fill: #ffffff;
+}
+
+
+.shape{
+    -fx-fill: #464646;
+}
+
+.shape-close-hovered{
+    -fx-fill: #F9F9F9;
+}
