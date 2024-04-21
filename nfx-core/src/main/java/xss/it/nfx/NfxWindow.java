@@ -12,12 +12,14 @@
 
 package xss.it.nfx;
 
+import javafx.animation.PauseTransition;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 
 /**
  * @author XDSSWAR
@@ -35,47 +37,54 @@ public  class NfxWindow extends Stage {
      * This EventHandler listens for WindowEvents and handles them accordingly.
      */
     private final EventHandler<WindowEvent> LISTENER = windowEvent -> {
-        ensureNfx();
-        if (getTitleBarColor()!=null) {
-            getNfxUtil().setTitleBarColor(getTitleBarColor());
-        }
-
-        if (getCaptionColor() != null){
-            getNfxUtil().setCaptionColor(getCaptionColor());
-        }
-
-        getNfxUtil().setCornerPref(getCornerPreference());
-        cornerPreferenceProperty().addListener((obs1, o1, pref) ->{
-            getNfxUtil().setCornerPref(pref);
-            invalidateSpots();
-        });
-
-        getNfxUtil().setBorderColor(getWindowBorder());
-        windowBorderProperty().addListener((obs1, o1, border) -> {
-            getNfxUtil().setBorderColor(border);
-            invalidateSpots();
-        });
-
-        widthProperty().addListener((obs,o, n) -> {
-            update(isMaximized(), isFullScreen());//New update, keep eye
-            invalidateSpots();
-        });
-        heightProperty().addListener((obs,o, n) -> {
-            update(isMaximized(), isFullScreen());//New update, keep eye
-            invalidateSpots();
-        });
-
-        titleBarColorProperty().addListener((obs, o, color) -> {
-            if (color != null && getNfxUtil() != null){
-                getNfxUtil().setTitleBarColor(color);
+        /*
+         * TODO : Hope this fix the flicker at shown
+         */
+        PauseTransition pt = new PauseTransition(Duration.millis(1));
+        pt.setOnFinished(event -> {
+            ensureNfx();
+            if (getTitleBarColor()!=null) {
+                getNfxUtil().setTitleBarColor(getTitleBarColor());
             }
-        });
 
-        captionColorProperty().addListener((obs, o, color) -> {
-            if (color != null && getNfxUtil() != null){
-                getNfxUtil().setCaptionColor(color);
+            if (getCaptionColor() != null){
+                getNfxUtil().setCaptionColor(getCaptionColor());
             }
+
+            getNfxUtil().setCornerPref(getCornerPreference());
+            cornerPreferenceProperty().addListener((obs1, o1, pref) ->{
+                getNfxUtil().setCornerPref(pref);
+                invalidateSpots();
+            });
+
+            getNfxUtil().setBorderColor(getWindowBorder());
+            windowBorderProperty().addListener((obs1, o1, border) -> {
+                getNfxUtil().setBorderColor(border);
+                invalidateSpots();
+            });
+
+            widthProperty().addListener((obs,o, n) -> {
+                update(isMaximized(), isFullScreen());//New update, keep eye
+                invalidateSpots();
+            });
+            heightProperty().addListener((obs,o, n) -> {
+                update(isMaximized(), isFullScreen());//New update, keep eye
+                invalidateSpots();
+            });
+
+            titleBarColorProperty().addListener((obs, o, color) -> {
+                if (color != null && getNfxUtil() != null){
+                    getNfxUtil().setTitleBarColor(color);
+                }
+            });
+
+            captionColorProperty().addListener((obs, o, color) -> {
+                if (color != null && getNfxUtil() != null){
+                    getNfxUtil().setCaptionColor(color);
+                }
+            });
         });
+        pt.play();
     };
 
     /**
@@ -91,7 +100,7 @@ public  class NfxWindow extends Stage {
      * Initializes the NfxWindow.
      */
     private void initialize(){
-        setOnShown(LISTENER);
+        setOnShowing(LISTENER);
     }
 
 
