@@ -12,10 +12,12 @@
 }
 
 .button{
-    -fx-min-width: 40;
-    -fx-max-width: 40;
-    -fx-pref-width: 40;
-    -fx-min-height: 22;
+    -fx-min-width: 46;
+    -fx-max-width: 46;
+    -fx-pref-width: 46;
+    -fx-min-height: 26;
+    -fx-pref-height: 26;
+    -fx-max-height: 26;
     -fx-border-radius: 0;
     -fx-background-radius: 0;
     -fx-background-insets: 0;

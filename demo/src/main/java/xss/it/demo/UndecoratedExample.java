@@ -152,7 +152,7 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
      */
     @Override
     public double getTitleBarHeight() {
-        return TITLE_BAR_HEIGHT;
+        return 0;
     }
 
 

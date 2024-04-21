@@ -532,7 +532,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
     /**
      * Invalidates the hit spots by setting their hover state to false.
      */
-    public final void invalidateSpots(){
+    protected final void invalidateSpots(){
         HIT_SPOTS.forEach(hitSpot -> hitSpot.setHovered(false));
     }
 

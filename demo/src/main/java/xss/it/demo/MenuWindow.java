@@ -39,8 +39,6 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
     @FXML
     private MenuBar menuBar;
 
-
-
     /**
      * The height of the title bar.
      */
@@ -143,6 +141,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
         });
 
 
+        //Menu Bar
         HitSpot bar = HitSpot.builder()
                 .control(menuBar)
                 .build();
