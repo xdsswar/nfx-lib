@@ -130,6 +130,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                         }
                     }
                     invalidateSpots();
+                    updateHitSpots();
                 });
 
                 if (isFullScreen()) setWindowState(WindowState.FULL_SCREEN);
@@ -143,6 +144,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                         }
                     }
                     invalidateSpots();
+                    updateHitSpots();
                 });
 
                 if (isIconified()) setWindowState(WindowState.MINIMIZED);
@@ -156,6 +158,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                         }
                     }
                     invalidateSpots();
+                    updateHitSpots();
                 });
 
 
@@ -166,11 +169,13 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                 cornerPreferenceProperty().addListener(observable -> {
                     invalidateSpots();
                     update(isMaximized(), isFullScreen());
+                    updateHitSpots();
                 });
 
                 windowBorderProperty().addListener((observableValue, color, t1) -> {
                     invalidateSpots();
                     update(isMaximized(), isFullScreen());
+                    updateHitSpots();
                 });
 
 
@@ -296,7 +301,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
             timer.restart();
             return;
         }
-        timer = new RestartableTimer(300, event -> {
+        timer = new RestartableTimer(200, event -> {
             HIT_SPOTS.clear();
             HIT_SPOTS.addAll(getHitSpots());
         });
@@ -322,8 +327,16 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
 
         update(isMaximized(), isFullScreen());
         invalidateSpots();
+        updateHitSpots();
     }
 
+    /**
+     * Triggers an update to refresh the entire window and its spots
+     */
+    public final void refresh(){
+        invalidateSpots();
+        updateHitSpots();
+    }
 
     /**
      * Gets a list of HitSpot objects associated with this object.
@@ -400,6 +413,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      */
     private int jniHitTest(int x, int y, boolean isOnResizeBorder ) {
         invalidateSpots();
+
         /*
          * Scale down mouse x/y because Swing coordinates/values may be scaled on a HiDPI screen.
          */

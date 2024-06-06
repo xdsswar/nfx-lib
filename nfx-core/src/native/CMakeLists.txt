@@ -34,5 +34,7 @@ add_library(${THIS_LIB}-${VERSION} SHARED
         src/utils/NfxWinProc.h
         src/jni_h/xss_it_nfx_AbstractNfxUndecoratedWindow.h
         src/NfxAbstract.cpp
+        src/os/win/WindowProc.h
+        src/os/win/WindowProc.cpp
 
 )

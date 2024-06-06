@@ -18,6 +18,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.shape.SVGPath;
+import javafx.stage.StageStyle;
 import xss.it.nfx.AbstractNfxUndecoratedWindow;
 import xss.it.nfx.HitSpot;
 import xss.it.nfx.WindowState;
@@ -152,7 +153,7 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
      */
     @Override
     public double getTitleBarHeight() {
-        return 0;
+        return TITLE_BAR_HEIGHT;
     }
 
 
