@@ -129,6 +129,14 @@ public final class NfxUtil {
     }
 
 
+    /**
+     * Focuses the window with the specified title using a native method.
+     *
+     * @param title The title of the window to focus.
+     */
+    public static void focusWindowByTitle(String title){
+        focusWindow(title);
+    }
 
     /*
      * =================================================================================================================
@@ -187,6 +195,13 @@ public final class NfxUtil {
      */
     private native boolean setBorderColor(long hWnd, int red, int green, int blue);
 
+    /**
+     * Focuses the window with the specified name using a native method.
+     *
+     * @param name The name of the window to focus.
+     */
+    private static native void focusWindow(String name);
+
     /*
      * =================================================================================================================
      *
@@ -223,7 +238,7 @@ public final class NfxUtil {
     /**
      * Version
      */
-    private static final String VERSION = "1.0.0";
+    private static final String VERSION = "1.0.1";
 
     /**
      * Name of the library file.

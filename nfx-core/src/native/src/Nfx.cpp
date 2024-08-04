@@ -3,6 +3,7 @@
 //
 
 #include <dwmapi.h>
+#include <iostream>
 
 #include "jni_h/xss_it_nfx_NfxUtil.h"
 #include "utils/utils.h"
@@ -104,4 +105,24 @@ JNIEXPORT jboolean JNICALL Java_xss_it_nfx_NfxUtil_setBorderColor
                DWMWA_BORDER_COLOR,
                &attr,
                sizeof(attr)) == S_OK;
+}
+
+
+/**
+ * Native method implementation for focusing a window with the specified name.
+ *
+ * @param env The JNI environment pointer.
+ * @param cls The Java class calling the native method.
+ * @param str The name of the window to focus as a JNI string.
+ */
+extern "C"
+JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_focusWindow
+(JNIEnv *env, jclass cls, jstring str) {
+    const char *nativeWindowName = env->GetStringUTFChars(str, nullptr);
+    HWND hwnd = FindWindow(nullptr, nativeWindowName);
+    if (hwnd != nullptr) {
+        ShowWindow(hwnd, SW_RESTORE);
+        SetForegroundWindow(hwnd);
+    }
+    env->ReleaseStringUTFChars(str, nativeWindowName);
 }

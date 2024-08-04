@@ -24,7 +24,7 @@ extern "C" {
  * Signature: (Ljava/lang/Object;)J
  */
 JNIEXPORT jlong JNICALL Java_xss_it_nfx_NfxUtil_getNativeHandle
-  (JNIEnv *, jclass, jobject);
+(JNIEnv *, jclass, jobject);
 
 /*
  * Class:     xss_it_nfx_NfxUtil
@@ -32,7 +32,7 @@ JNIEXPORT jlong JNICALL Java_xss_it_nfx_NfxUtil_getNativeHandle
  * Signature: (JDDD)V
  */
 JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTitleBarColor
-  (JNIEnv *, jclass, jlong, jdouble, jdouble, jdouble);
+(JNIEnv *, jclass, jlong, jdouble, jdouble, jdouble);
 
 /*
  * Class:     xss_it_nfx_NfxUtil
@@ -40,7 +40,7 @@ JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTitleBarColor
  * Signature: (JDDD)V
  */
 JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTextColor
-  (JNIEnv *, jclass, jlong, jdouble, jdouble, jdouble);
+(JNIEnv *, jclass, jlong, jdouble, jdouble, jdouble);
 
 /*
  * Class:     xss_it_nfx_NfxUtil
@@ -48,7 +48,7 @@ JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_setTextColor
  * Signature: (JI)Z
  */
 JNIEXPORT jboolean JNICALL Java_xss_it_nfx_NfxUtil_setCornerPreference
-  (JNIEnv *, jobject, jlong, jint);
+(JNIEnv *, jobject, jlong, jint);
 
 /*
  * Class:     xss_it_nfx_NfxUtil
@@ -56,7 +56,17 @@ JNIEXPORT jboolean JNICALL Java_xss_it_nfx_NfxUtil_setCornerPreference
  * Signature: (JIII)Z
  */
 JNIEXPORT jboolean JNICALL Java_xss_it_nfx_NfxUtil_setBorderColor
-  (JNIEnv *, jobject, jlong, jint, jint, jint);
+(JNIEnv *, jobject, jlong, jint, jint, jint);
+
+
+ /*
+ * Class:     xss_it_nfx_NfxUtil
+ * Method:    focusWindow
+ * Signature: (Ljava/lang/String;)V
+ */
+ JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_focusWindow
+   (JNIEnv *, jclass, jstring);
+
 
 #ifdef __cplusplus
 }

@@ -27,7 +27,7 @@ jar{
     manifest {
         attributes(
                 'name' : jarName,
-                'version': version,
+                'version': '1.0.1',
                 'description': 'Native JavaFX utility',
                 'author': 'Xtreme Software Solutions (XSS&IT)'
         )
