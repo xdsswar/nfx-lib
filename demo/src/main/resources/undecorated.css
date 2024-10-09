@@ -19,13 +19,11 @@
     -fx-background-color: #F3F3F3;
 }
 
-.hit-hovered,
-.hit-btn:hover{
+.hit-hovered{
     -fx-background-color: rgba(150, 150, 150, 0.32);
 }
 
-.hit-close-btn,
-.hit-close:hover{
+.hit-close-btn{
     -fx-background-color: #C42B1C;
     -fx-text-fill: #ffffff;
 }
@@ -84,5 +82,10 @@ menu{
     -fx-background-radius: 2;
     -fx-border-radius: 2;
     -fx-font-size: 13;
+}
+
+.header{
+    -fx-border-color: red;
+    -fx-border-width: 0 0 1 0;
 }
 

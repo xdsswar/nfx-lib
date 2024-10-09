@@ -448,11 +448,15 @@ bool NfxWinProc::hasAutoHideTaskbar(int edge, RECT rcMonitor) {
  * @return True if the window is in full-screen mode, false otherwise.
  */
 BOOL NfxWinProc::isFullscreen() {
-    JNIEnv *pJniEnv = getEnv();
-    if (pJniEnv == nullptr)
-        return FALSE;
+    JNIEnv *attachedEnv;
+    jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
+    if (attachResult != JNI_OK) {
+        return JNI_FALSE;
+    }
 
-    return pJniEnv->CallBooleanMethod(obj, isFullscreenMID);
+    const BOOL res =  attachedEnv->CallBooleanMethod(obj, isFullscreenMID);
+    jvm->DetachCurrentThread();
+    return res;
 }
 
 /**
@@ -461,11 +465,14 @@ BOOL NfxWinProc::isFullscreen() {
  * @return True if the window is maximized, false otherwise.
  */
 BOOL NfxWinProc::isMaximized() {
-    JNIEnv *pJniEnv = getEnv();
-    if (pJniEnv == nullptr)
-        return FALSE;
-
-    return pJniEnv->CallBooleanMethod(obj, isMaximizedMID);
+    JNIEnv *attachedEnv;
+    jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
+    if (attachResult != JNI_OK) {
+        return JNI_FALSE;
+    }
+    const BOOL res =  attachedEnv->CallBooleanMethod(obj, isMaximizedMID);
+    jvm->DetachCurrentThread();
+    return res;
 }
 
 /**
@@ -477,11 +484,15 @@ BOOL NfxWinProc::isMaximized() {
  * @return                 The hit test result indicating the area of the window that the cursor is over.
  */
 int NfxWinProc::onNcHitTest(int x, int y, boolean isOnResizeBorder) {
-    JNIEnv *pJniEnv = getEnv();
-    if (pJniEnv == nullptr)
+    JNIEnv *attachedEnv;
+    jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
+    if (attachResult != JNI_OK) {
+        // Handle the error: failed to attach the thread
         return isOnResizeBorder ? HTTOP : HTCLIENT;
-
-    return pJniEnv->CallIntMethod(obj, onNcHitTestMID, (jint) x, (jint) y, isOnResizeBorder);
+    }
+    jint result = attachedEnv->CallIntMethod(obj, onNcHitTestMID, (jint) x, (jint) y, isOnResizeBorder);
+    jvm->DetachCurrentThread();
+    return result;
 }
 
 /**
@@ -494,11 +505,13 @@ void NfxWinProc::onWmMouseLeave(HWND hWnd) {
     GetCursorPos(&point);
     HWND under = WindowFromPoint(point);
     if (under != hWnd) {
-        JNIEnv *pJniEnv = getEnv();
-        if (pJniEnv == nullptr) {
+        JNIEnv *attachedEnv;
+        jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
+        if (attachResult != JNI_OK) {
             return;
         }
-        pJniEnv->CallVoidMethod(obj, onWmMouseLeaveMID);
+        attachedEnv->CallVoidMethod(obj, onWmMouseLeaveMID);
+        jvm->DetachCurrentThread();
     }
 }
 
@@ -508,10 +521,13 @@ void NfxWinProc::onWmMouseLeave(HWND hWnd) {
  * that it will be fired only once even if called multiple times.
  */
 void NfxWinProc::fireStateChangedLaterOnce() {
-    JNIEnv *pJniEnv = getEnv();
-    if (pJniEnv == nullptr)
+    JNIEnv *attachedEnv;
+    jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
+    if (attachResult != JNI_OK) {
         return;
-    pJniEnv->CallVoidMethod(obj, fireStateChangeMID);
+    }
+    attachedEnv->CallVoidMethod(obj, fireStateChangeMID);
+    jvm->DetachCurrentThread();
 }
 
 /**

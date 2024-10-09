@@ -68,6 +68,7 @@ public class DialogExample extends AbstractNfxUndecoratedWindow implements Initi
     @Override
     public List<HitSpot> getHitSpots() {
         HitSpot spot = HitSpot.builder()
+                .window(this)
                 .control(closeBtn)
                 .close(true)
                 .build();

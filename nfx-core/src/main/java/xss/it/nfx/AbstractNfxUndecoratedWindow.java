@@ -14,6 +14,7 @@ package xss.it.nfx;
 
 import com.sun.it.nfx.Rect;
 import com.sun.it.nfx.RestartableTimer;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -83,6 +84,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * HitSpots
      */
     private final List<HitSpot> HIT_SPOTS;
+
 
 
     /**
@@ -297,16 +299,20 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * Updates the hit spots in the window.
      */
     private void updateHitSpots(){
-        if (timer!=null){
-            timer.restart();
-            return;
-        }
-        timer = new RestartableTimer(200, event -> {
-            HIT_SPOTS.clear();
-            HIT_SPOTS.addAll(getHitSpots());
+        Platform.runLater(()->{
+            if (timer!=null){
+                timer.restart();
+                return;
+            }
+            timer = new RestartableTimer(300, event -> {
+                HIT_SPOTS.clear();
+                HIT_SPOTS.addAll(getHitSpots());
+            });
+            timer.start();
         });
-        timer.start();
     }
+
+
 
     /**
      * Handles the window state change.
@@ -421,7 +427,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
         int sx = (int) pt.getX();
         int sy = (int) pt.getY();
 
-        boolean isOnTitleBar = sy < getTitleBarHeight();
+        boolean isOnTitleBar = sy < (getWindowState() == WindowState.MAXIMIZED ? (getTitleBarHeight() + 5) : getTitleBarHeight());
 
         for (HitSpot spot : HIT_SPOTS) {
             if (contains(spot.getRect(), sx, sy)) {
@@ -524,7 +530,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
         double scaleY = screen.getOutputScaleY();
         double scaledX = point.getX() / scaleX;
         double scaledY = point.getY() / scaleY;
-        return new Point2D(clipRound(scaledX), clipRound(scaledY));
+        return new Point2D(scaledX, scaledY);
     }
 
     /**
@@ -533,6 +539,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * @param value The double value to round.
      * @return The rounded integer value, clipped to the range of Integer.MIN_VALUE and Integer.MAX_VALUE.
      */
+    @Deprecated
     private int clipRound( double value ) {
         value -= 0.5;
         if( value < Integer.MIN_VALUE )

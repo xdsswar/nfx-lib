@@ -3,6 +3,7 @@ plugins {
 }
 
 group 'xss.it.nfx'
+version = '1.0.2'
 
 def jarName = 'nfx-core'
 
@@ -27,7 +28,7 @@ jar{
     manifest {
         attributes(
                 'name' : jarName,
-                'version': '1.0.1',
+                'version': '1.0.2',
                 'description': 'Native JavaFX utility',
                 'author': 'Xtreme Software Solutions (XSS&IT)'
         )

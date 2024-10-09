@@ -17,6 +17,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.StageStyle;
 import xss.it.nfx.AbstractNfxUndecoratedWindow;
@@ -36,6 +37,9 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
     @FXML
     private Button closeBtn, maxBtn, minBtn;
 
+    @FXML
+    private HBox buttonContainer;
+
     /**
      * The height of the title bar.
      */
@@ -47,6 +51,7 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
      */
     public UndecoratedExample() {
         super();
+        initStyle(StageStyle.UNIFIED);
         try {
             Parent parent = Assets.load("/undecorated.fxml", this);
             Scene scene = new Scene(parent);
@@ -74,6 +79,7 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
         handelState(getWindowState());
         windowStateProperty().addListener((obs, o, state) -> handelState(state));
 
+
     }
 
     /**
@@ -100,6 +106,7 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
     @Override
     public List<HitSpot> getHitSpots() {
         HitSpot minimizeHitSpot = HitSpot.builder()
+                .window(this)
                 .control(minBtn)
                 .minimize(true)
                 .build();
@@ -114,6 +121,7 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
         });
 
         HitSpot maximizeHitSpot = HitSpot.builder()
+                .window(this)
                 .control(maxBtn)
                 .maximize(true)
                 .build();
@@ -128,6 +136,7 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
         });
 
         HitSpot closeHitSpot = HitSpot.builder()
+                .window(this)
                 .control(closeBtn)
                 .close(true)
                 .build();

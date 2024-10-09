@@ -7,15 +7,14 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-
-<AnchorPane prefHeight="507.0" prefWidth="894.0" styleClass="base" stylesheets="@undecorated.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane prefHeight="507.0" prefWidth="894.0" styleClass="base" stylesheets="@undecorated.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox layoutX="43.0" layoutY="104.0" prefHeight="507.0" prefWidth="200.0" styleClass="left-pane" stylesheets="@undecorated.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <HBox prefHeight="30.0" prefWidth="200.0" />
          </children>
       </VBox>
-      <HBox alignment="TOP_RIGHT" layoutX="361.0" layoutY="14.0" prefHeight="30.0" prefWidth="200.0" styleClass="base" stylesheets="@undecorated.css" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <HBox fx:id="buttonContainer" alignment="TOP_RIGHT" layoutX="361.0" layoutY="14.0" prefHeight="30.0" prefWidth="200.0" stylesheets="@undecorated.css" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
             <Button fx:id="minBtn" mnemonicParsing="false" styleClass="hit-btn">
                <graphic>
@@ -37,6 +36,10 @@
                </graphic>
             </Button>
          </children>
+         <styleClass>
+            <String fx:value="base" />
+            <String fx:value="header" />
+         </styleClass>
       </HBox>
    </children>
 </AnchorPane>

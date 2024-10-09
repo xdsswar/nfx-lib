@@ -37,4 +37,6 @@ void set_title_bar_color(HWND , COLORREF);
  */
 void set_text_color(HWND , COLORREF);
 
+
+
 #endif //UTILS_H

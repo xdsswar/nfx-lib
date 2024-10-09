@@ -20,8 +20,11 @@ public class Rect {
      * @param bounds The Bounds object to create the Rectangle2D from.
      * @return The created Rectangle2D object.
      */
-    public static Rectangle2D createFromBounds(Bounds bounds){
-        return new Rectangle2D(bounds.getMinX()+5, bounds.getMinY(), bounds.getWidth(),bounds.getHeight());
+    public static Rectangle2D createFromBounds(Bounds bounds, boolean max){
+        if (max){
+            return new Rectangle2D(bounds.getMinX()+7, bounds.getMinY()+6, bounds.getWidth(),bounds.getHeight());
+        }
+        return new Rectangle2D(bounds.getMinX()+7, bounds.getMinY(), bounds.getWidth(),bounds.getHeight());
     }
 
 

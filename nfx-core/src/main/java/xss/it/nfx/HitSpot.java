@@ -47,11 +47,20 @@ public final class HitSpot {
     private BooleanProperty hovered;
 
     /**
+     * Window
+     */
+    private AbstractNfxUndecoratedWindow window = null;
+
+    /**
      * Constructs a HitSpot object using a builder pattern to specify interaction options.
      *
      * @param builder The builder containing interaction options.
      */
     private HitSpot(Builder builder) {
+        if (builder.window == null){
+            throw new NullPointerException("AbstractNfxUndecoratedWindow can't be null");
+        }
+        this.window = builder.window;
         this.control = builder.control;
         this.close = builder.close;
         this.maximize = builder.maximize;
@@ -154,7 +163,10 @@ public final class HitSpot {
      * @return The Rectangle2D representing the bounds of the HitSpot.
      */
     public Rectangle2D getRect(){
-        return Rect.createFromBounds(control.localToScene(control.getBoundsInLocal()));
+        return Rect.createFromBounds(control.localToScene(
+                control.getBoundsInLocal()),
+                window.getWindowState()== WindowState.MAXIMIZED
+        );
     }
 
     /**
@@ -186,6 +198,7 @@ public final class HitSpot {
          */
         private boolean systemMenu = false;
 
+        private AbstractNfxUndecoratedWindow window;
 
         /**
          * Sets the control for the HitSpot.
@@ -240,6 +253,21 @@ public final class HitSpot {
          */
         public Builder systemMenu(boolean systemMenu) {
             this.systemMenu = systemMenu;
+            return this;
+        }
+
+        /**
+         * Sets the window instance for the builder and returns the builder for chaining.
+         * <p>
+         * This method assigns the specified {@link AbstractNfxUndecoratedWindow} instance to the builder,
+         * allowing customization of the window's properties and behaviors. By returning the builder itself,
+         * this method supports method chaining, enabling a fluent and flexible way to configure the window.
+         *
+         * @param window the {@link AbstractNfxUndecoratedWindow} instance to be used in the builder
+         * @return the current {@code Builder} instance for chaining further configuration methods
+         */
+        public Builder window(AbstractNfxUndecoratedWindow window) {
+            this.window = window;
             return this;
         }
 

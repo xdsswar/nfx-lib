@@ -238,7 +238,7 @@ public final class NfxUtil {
     /**
      * Version
      */
-    private static final String VERSION = "1.0.1";
+    private static final String VERSION = "1.0.2";
 
     /**
      * Name of the library file.

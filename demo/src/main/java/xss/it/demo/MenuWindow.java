@@ -97,6 +97,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
     @Override
     public List<HitSpot> getHitSpots() {
         HitSpot minimizeHitSpot = HitSpot.builder()
+                .window(this)
                 .control(minBtn)
                 .minimize(true)
                 .build();
@@ -111,6 +112,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
         });
 
         HitSpot maximizeHitSpot = HitSpot.builder()
+                .window(this)
                 .control(maxBtn)
                 .maximize(true)
                 .build();
@@ -125,6 +127,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
         });
 
         HitSpot closeHitSpot = HitSpot.builder()
+                .window(this)
                 .control(closeBtn)
                 .close(true)
                 .build();
@@ -143,6 +146,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
 
         //Menu Bar
         HitSpot bar = HitSpot.builder()
+                .window(this)
                 .control(menuBar)
                 .build();
 
