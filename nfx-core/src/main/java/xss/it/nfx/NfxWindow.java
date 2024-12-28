@@ -42,7 +42,7 @@ public  class NfxWindow extends Stage {
         /*
          * TODO : Hope this fix the flicker at shown
          */
-        PauseTransition pt = new PauseTransition(Duration.millis(1));
+        PauseTransition pt = new PauseTransition(Duration.millis(3));
         pt.setOnFinished(event -> {
             ensureNfx();
             if (getTitleBarColor()!=null) {

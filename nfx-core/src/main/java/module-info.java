@@ -17,6 +17,8 @@
 module nfx.core {
     requires javafx.base;
     requires javafx.graphics;
+    requires java.desktop;
+    requires jdk.dynalink;
 
     exports xss.it.nfx;
     opens xss.it.nfx;

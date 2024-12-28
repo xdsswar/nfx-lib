@@ -145,6 +145,7 @@ public final class UndecoratedExample extends AbstractNfxUndecoratedWindow imple
             if (hovered){
                 closeHitSpot.getControl().getStyleClass().add("hit-close-btn");
                 closeBtn.getGraphic().getStyleClass().add("shape-close-hovered");
+                System.out.println("Hovered");
             }
             else {
                 closeHitSpot.getControl().getStyleClass().remove("hit-close-btn");

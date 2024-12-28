@@ -13,8 +13,6 @@
 package xss.it.nfx;
 
 import com.sun.it.nfx.Rect;
-import com.sun.it.nfx.RestartableTimer;
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -27,8 +25,10 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.WindowEvent;
 
-import java.util.ArrayList;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author XDSSWAR
@@ -76,16 +76,19 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
     public static final EventType<WindowEvent> BACKGROUND_CHANGE = new EventType<>(Event.ANY, "BACKGROUND_CHANGE");
 
     /**
-     * Custom times to handel hitSpot events
+     * Custom timer to handel hitSpot events
      */
-    private RestartableTimer timer;
+    private Timer timer;
 
     /**
      * HitSpots
      */
     private final List<HitSpot> HIT_SPOTS;
 
-
+    /**
+     * Prev WindowState
+     */
+    protected WindowState prevState = null;
 
     /**
      * Constructs a new AbstractNfxUndecoratedWindow with default settings.
@@ -103,7 +106,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      */
     public AbstractNfxUndecoratedWindow(boolean hideFromTaskBar){
         super();
-        HIT_SPOTS = new ArrayList<>();
+        HIT_SPOTS = new CopyOnWriteArrayList<>();
         initialize();
         setHideFromTaskBar(hideFromTaskBar);
     }
@@ -150,13 +153,14 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                 });
 
                 if (isIconified()) setWindowState(WindowState.MINIMIZED);
+
                 iconifiedProperty().addListener((obs1, o1, min) -> {
                     if (min) {
                         setWindowState(WindowState.MINIMIZED);
                     }
                     else {
-                        if (!isFullScreen() && !isMaximized()){
-                            setWindowState(WindowState.NORMAL);
+                        if (prevState != null){
+                            setWindowState(prevState);
                         }
                     }
                     invalidateSpots();
@@ -166,7 +170,14 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
 
                 //State
                 handleState(getWindowState());
-                windowStateProperty().addListener((obs1, o1, state) -> handleState(state));
+
+
+                windowStateProperty().addListener((ob, old, state) -> {
+                    if (WindowState.MINIMIZED != old){
+                        prevState = old;
+                    }
+                    handleState(state);
+                });
 
                 cornerPreferenceProperty().addListener(observable -> {
                     invalidateSpots();
@@ -180,7 +191,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                     updateHitSpots();
                 });
 
-
+                sceneProperty().addListener((obs1, scene, s) -> refresh());
                 updateHitSpots();
             }
         });
@@ -296,20 +307,34 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
     }
 
     /**
+     * Updates the current state by invoking the {@code refresh} method.
+     * <p>
+     * This method provides a final update mechanism that calls {@code refresh} to refresh
+     * the state or content, ensuring the most recent data or UI changes are applied.
+     */
+    public final void update(){
+        refresh();
+    }
+
+
+    /**
      * Updates the hit spots in the window.
      */
     private void updateHitSpots(){
-        Platform.runLater(()->{
-            if (timer!=null){
+        EventQueue.invokeLater( () -> {
+            if( timer != null ) {
                 timer.restart();
                 return;
             }
-            timer = new RestartableTimer(300, event -> {
+
+            timer = new Timer( 300, e -> {
+                timer = null;
                 HIT_SPOTS.clear();
                 HIT_SPOTS.addAll(getHitSpots());
-            });
+            } );
+            timer.setRepeats( false );
             timer.start();
-        });
+        } );
     }
 
 
@@ -335,6 +360,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
         invalidateSpots();
         updateHitSpots();
     }
+
 
     /**
      * Triggers an update to refresh the entire window and its spots
@@ -408,6 +434,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      *
      * =================================================================================================================
      */
+    private HitSpot currentHoveredSpot = null;
 
     /**
      * Handles the non-client hit test for the given point (x, y) and resize border flag. Call from JNI
@@ -418,46 +445,47 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * @return The hit test result code.
      */
     private int jniHitTest(int x, int y, boolean isOnResizeBorder ) {
-        invalidateSpots();
-
-        /*
-         * Scale down mouse x/y because Swing coordinates/values may be scaled on a HiDPI screen.
-         */
-        Point2D pt = scaleDown(new Point2D(x,y));
+        Point2D pt = scaleDown(new Point2D(x, y));
         int sx = (int) pt.getX();
         int sy = (int) pt.getY();
 
         boolean isOnTitleBar = sy < (getWindowState() == WindowState.MAXIMIZED ? (getTitleBarHeight() + 5) : getTitleBarHeight());
-
-        for (HitSpot spot : HIT_SPOTS) {
-            if (contains(spot.getRect(), sx, sy)) {
-                if (spot.isSystemMenu()) {//system menu
-                    spot.setHovered(true);
-                    return HT_SYS_MENU;
-                } else if (spot.isMinimize()) {//minimize
-                    spot.setHovered(true);
-                    return HT_MIN_BUTTON;
-                } else if (spot.isMaximize()) {//maximize
-                    spot.setHovered(true);
-                    return HT_MAX_BUTTON;
-                } else if (spot.isClose()) {//close
-                    spot.setHovered(true);
-                    return HT_CLOSE;
-                } else if (spot.isClient()) {//User controls
-                    return HT_CLIENT;
-                } else {//Refresh styles
-                    spot.setHovered(false);
-                }
-            } else {//Invalidate all
-                invalidateSpots();
-            }
-        }
-
+        HitSpot newHoveredSpot = null; // Track the new spot being hovered
 
         if (isOnTitleBar) {
-            return isOnResizeBorder ? HT_TOP : HT_CAPTION;
+            for (HitSpot spot : HIT_SPOTS) {
+                if (contains(spot.getRect(), sx, sy)) {
+                    newHoveredSpot = spot;
+                    break; // Found the hovered spot, exit loop
+                }
+            }
+
+            // Only update if the hovered spot has changed
+            if (currentHoveredSpot != newHoveredSpot) {
+                invalidateSpots(); // Invalidate all spots
+
+                if (newHoveredSpot != null) {
+                    newHoveredSpot.setHovered(true); // Set the new hovered spot
+                }
+
+                currentHoveredSpot = newHoveredSpot; // Update current hovered spot reference
+            }
+
+            // Return appropriate value for the hovered spot type
+            if (newHoveredSpot != null) {
+                if (newHoveredSpot.isSystemMenu()) return HT_SYS_MENU;
+                if (newHoveredSpot.isMinimize()) return HT_MIN_BUTTON;
+                if (newHoveredSpot.isMaximize()) return HT_MAX_BUTTON;
+                if (newHoveredSpot.isClose()) return HT_CLOSE;
+                if (newHoveredSpot.isClient()) return HT_CLIENT;
+            }
+        } else {
+            currentHoveredSpot = null;
         }
-        return isOnResizeBorder ? HT_TOP : HT_CLIENT;
+        invalidateSpots();
+        // Return based on title bar and resize border status
+        return isOnTitleBar ? (isOnResizeBorder ? HT_TOP : HT_CAPTION) : (isOnResizeBorder ? HT_TOP : HT_CLIENT);
+
     }
 
 
