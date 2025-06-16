@@ -89,3 +89,12 @@ menu{
     -fx-border-width: 0 0 1 0;
 }
 
+/**
+    Little example to set title font size in AbstractNfxUndecoratedWindow types
+ */
+
+.my-title{
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 20;
+    -fx-font-weight: bold;
+}

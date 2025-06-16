@@ -2,6 +2,7 @@
 
 <?import java.lang.String?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -11,7 +12,10 @@
    <children>
       <VBox layoutX="43.0" layoutY="104.0" prefHeight="507.0" prefWidth="200.0" styleClass="left-pane" stylesheets="@undecorated.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <HBox prefHeight="30.0" prefWidth="200.0" />
+            <HBox alignment="CENTER" prefHeight="30.0" prefWidth="200.0">
+               <children>
+                  <Label styleClass="my-title" text="My Title" />
+               </children></HBox>
          </children>
       </VBox>
       <HBox fx:id="buttonContainer" alignment="TOP_RIGHT" layoutX="361.0" layoutY="14.0" prefHeight="30.0" prefWidth="200.0" stylesheets="@undecorated.css" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">

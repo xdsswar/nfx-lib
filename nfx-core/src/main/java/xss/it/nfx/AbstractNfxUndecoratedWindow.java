@@ -90,6 +90,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      */
     protected WindowState prevState = null;
 
+
     /**
      * Constructs a new AbstractNfxUndecoratedWindow with default settings.
      * Calls the constructor with the parameter 'hideFromTaskBar' set to false.
@@ -121,8 +122,8 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                 install(nfxUtil.getHWnd());
                 update(isMaximized(), isFullScreen());
                 hideFromTaskBar(nfxUtil.getHWnd(),getHideFromTaskBar());
-                hideFromTaskBarProperty().addListener((obs1, o1, hide) -> hideFromTaskBar(nfxUtil.getHWnd(), hide));
-
+                hideFromTaskBarProperty().addListener((obs1, o1, hide)
+                        -> hideFromTaskBar(nfxUtil.getHWnd(), hide));
 
                 if (isMaximized()) setWindowState(WindowState.MAXIMIZED);
                 maximizedProperty().addListener((obs1, o1, max) -> {
@@ -167,10 +168,8 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                     updateHitSpots();
                 });
 
-
                 //State
                 handleState(getWindowState());
-
 
                 windowStateProperty().addListener((ob, old, state) -> {
                     if (WindowState.MINIMIZED != old){
@@ -316,7 +315,6 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
         refresh();
     }
 
-
     /**
      * Updates the hit spots in the window.
      */
@@ -336,8 +334,6 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
             timer.start();
         } );
     }
-
-
 
     /**
      * Handles the window state change.
@@ -395,6 +391,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
     protected final void update(boolean max, boolean full) {
         update(getNfxUtil().getHWnd(), isMaximized(), isFullScreen());
     }
+
 
     /*
      * =================================================================================================================
