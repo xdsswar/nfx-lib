@@ -33,6 +33,7 @@ typedef enum {
 #define DWMWA_COLOR_NONE    0xFFFFFFFE
 #endif
 
+
 class NfxWinProc {
 public:
     /**
@@ -146,7 +147,6 @@ private:
      */
     bool isMoving;
 
-
     /**
      * Constructor for NfxWinProc.
      */
@@ -249,6 +249,21 @@ private:
      * Sets the state of a menu item in the system menu.
      */
     static void setMenuItemState(HMENU systemMenu, int item, bool enabled);
+
+
+    // Helper: screen LPARAM -> client POINT (physical px)
+    static POINT lparamScreenToClient(HWND hWnd, LPARAM lp) {
+        POINT pt{ GET_X_LPARAM(lp), GET_Y_LPARAM(lp) }; // screen px
+        ::ScreenToClient(hWnd, &pt);                    // -> client px
+        return pt;
+    }
+
+    // Helper: px -> DIP using the window's current DPI (Per-Monitor-V2 safe)
+    static int px_to_dip(int px, UINT dpi) {
+        return ::MulDiv(px, 96, static_cast<int>(dpi));  // round properly
+    }
+
+
 };
 
 #endif //NFXWINPROC_H

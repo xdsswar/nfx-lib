@@ -4,7 +4,7 @@ set(THIS_LIB "nfx-core-win64")
 
 project(${THIS_LIB})
 
-set(VERSION "1.0.2")
+set(VERSION "1.0.3")
 
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 17)
@@ -36,4 +36,5 @@ add_library(${THIS_LIB}-${VERSION} SHARED
         src/NfxAbstract.cpp
         src/os/win/WindowProc.h
         src/os/win/WindowProc.cpp
+        src/utils/attach.h
 )

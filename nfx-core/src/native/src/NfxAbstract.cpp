@@ -8,6 +8,7 @@
 #include <dwmapi.h>
 #include <iostream>
 
+#include "utils/attach.h"
 #include "utils/HwndMap.h"
 #include "utils/NfxWinProc.h"
 
@@ -125,6 +126,11 @@ HWND NfxWinProc::install(JNIEnv *env, jobject obj, HWND hWnd) {
     // replace window procedure
     wp->defaultWndProc = reinterpret_cast<WNDPROC>(::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) StaticWindowProc));
 
+    /**
+     *Forces a window update to apply changes
+     */
+    SetWindowPos(hWnd, nullptr, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     return hWnd;
 }
 
@@ -204,19 +210,6 @@ LRESULT CALLBACK NfxWinProc::StaticWindowProc(HWND hwnd, int uMsg, WPARAM wParam
 LRESULT CALLBACK NfxWinProc::WindowProc(HWND hWnd, int uMsg, WPARAM wParam, LPARAM lParam) {
     onWmMouseLeave(hWnd);
     switch (uMsg) {
-        // Handling Fullscreen Transitions Explicitly
-        /*  case WM_SYSCOMMAND:
-              if (wParam == SC_MAXIMIZE) {
-                  // Custom handling for maximizing
-              } else if (wParam == SC_RESTORE && isFullscreen()) {
-                  // Custom handling to transition out of fullscreen
-                  SendMessage(hWnd, WM_SETREDRAW, FALSE, 0);
-                  // Apply style changes and position adjustments
-                  SendMessage(hWnd, WM_SETREDRAW, TRUE, 0);
-                  RedrawWindow(hWnd, nullptr, nullptr, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
-                  return 0;
-              }
-          break;*/
         case WM_NCCALCSIZE:
             return WmNcCalcSize(hWnd, uMsg, wParam, lParam);
 
@@ -325,7 +318,7 @@ LRESULT NfxWinProc::WmEraseBackground(HWND hWnd, int uMsg, WPARAM wParam, LPARAM
         return FALSE;
 
     // fill background
-    HDC hdc = (HDC) wParam;
+    auto hdc = (HDC) wParam;
     RECT rect;
     ::GetClientRect(hWnd, &rect);
     ::FillRect(hdc, &rect, background);
@@ -402,16 +395,20 @@ LRESULT NfxWinProc::WmNcHitTest(HWND hWnd, int uMsg, WPARAM wParam, LPARAM lPara
     if (lResult != HTCLIENT)
         return lResult;
 
-    // get mouse x/y in window coordinates
-    LRESULT xy = screenToWindowCoordinates(hWnd, lParam);
-    int x = GET_X_LPARAM(xy);
-    int y = GET_Y_LPARAM(xy);
+    // 1) Get client coordinates in PHYSICAL PX
+    auto [x, y] = lparamScreenToClient(hWnd, lParam);
 
-    int resizeBorderHeight = getResizeHandleHeight();
-    bool isOnResizeBorder = (y < resizeBorderHeight) &&
-                            (::GetWindowLong(hWnd, GWL_STYLE) & WS_THICKFRAME) != 0;
+    // 2) Compute native-only facts in PX (no need to involve Java)
+    const int resizeBorderHeightPx = getResizeHandleHeight(); // uses GetSystemMetricsForDpi
+    const bool isOnResizeBorder = (y < resizeBorderHeightPx) &&
+                                  ((::GetWindowLong(hWnd, GWL_STYLE) & WS_THICKFRAME) != 0);
 
-    return onNcHitTest(x, y, isOnResizeBorder);
+    // 3) Convert PX -> DIP for Java
+    const UINT dpi = ::GetDpiForWindow(hWnd);
+    const int xDip = px_to_dip(x, dpi);
+    const int yDip = px_to_dip(y, dpi);
+
+    return onNcHitTest(xDip, yDip, isOnResizeBorder);
 }
 
 /**
@@ -448,15 +445,18 @@ bool NfxWinProc::hasAutoHideTaskbar(int edge, RECT rcMonitor) {
  * @return True if the window is in full-screen mode, false otherwise.
  */
 BOOL NfxWinProc::isFullscreen() {
-    JNIEnv *attachedEnv;
-    jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
-    if (attachResult != JNI_OK) {
-        return JNI_FALSE;
-    }
+    JniAttachGuard guard(jvm);
+    JNIEnv *at_env = guard.env();
+    if (!at_env)
+        return FALSE;
 
-    const BOOL res =  attachedEnv->CallBooleanMethod(obj, isFullscreenMID);
-    jvm->DetachCurrentThread();
-    return res;
+    jboolean r = at_env->CallBooleanMethod(obj, isFullscreenMID);
+
+    if (at_env->ExceptionCheck()) {
+        at_env->ExceptionClear();
+        r = JNI_FALSE;
+    }
+    return (r == JNI_TRUE) ? TRUE : FALSE;
 }
 
 /**
@@ -465,14 +465,16 @@ BOOL NfxWinProc::isFullscreen() {
  * @return True if the window is maximized, false otherwise.
  */
 BOOL NfxWinProc::isMaximized() {
-    JNIEnv *attachedEnv;
-    jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
-    if (attachResult != JNI_OK) {
-        return JNI_FALSE;
+    JniAttachGuard guard(jvm);
+    JNIEnv *at_env = guard.env();
+    if (!at_env) return FALSE;
+
+    jboolean r = at_env->CallBooleanMethod(obj, isMaximizedMID);
+    if (at_env->ExceptionCheck()) {
+        at_env->ExceptionClear();
+        return FALSE;
     }
-    const BOOL res =  attachedEnv->CallBooleanMethod(obj, isMaximizedMID);
-    jvm->DetachCurrentThread();
-    return res;
+    return (r == JNI_TRUE) ? TRUE : FALSE; // convert jboolean -> BOOL
 }
 
 /**
@@ -484,14 +486,18 @@ BOOL NfxWinProc::isMaximized() {
  * @return                 The hit test result indicating the area of the window that the cursor is over.
  */
 int NfxWinProc::onNcHitTest(int x, int y, boolean isOnResizeBorder) {
-    JNIEnv *attachedEnv;
-    jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
-    if (attachResult != JNI_OK) {
-        // Handle the error: failed to attach the thread
+    JniAttachGuard guard(jvm); // jvm is your cached JavaVM*
+    JNIEnv *at_env = guard.env();
+    if (!at_env) {
+        // Failed to get/attach env; fall back
         return isOnResizeBorder ? HTTOP : HTCLIENT;
     }
-    jint result = attachedEnv->CallIntMethod(obj, onNcHitTestMID, (jint) x, (jint) y, isOnResizeBorder);
-    jvm->DetachCurrentThread();
+    jint result = at_env->CallIntMethod(obj, onNcHitTestMID,
+                                        (jint) x, (jint) y, (jboolean) isOnResizeBorder);
+    if (at_env->ExceptionCheck()) {
+        at_env->ExceptionClear();
+        return isOnResizeBorder ? HTTOP : HTCLIENT;
+    }
     return result;
 }
 
@@ -505,13 +511,15 @@ void NfxWinProc::onWmMouseLeave(HWND hWnd) {
     GetCursorPos(&point);
     HWND under = WindowFromPoint(point);
     if (under != hWnd) {
-        JNIEnv *attachedEnv;
-        jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
-        if (attachResult != JNI_OK) {
-            return;
+        JniAttachGuard guard(jvm);
+        JNIEnv *at_env = guard.env();
+        if (!at_env) return;
+
+        at_env->CallVoidMethod(obj, onWmMouseLeaveMID);
+
+        if (at_env->ExceptionCheck()) {
+            at_env->ExceptionClear();
         }
-        attachedEnv->CallVoidMethod(obj, onWmMouseLeaveMID);
-        jvm->DetachCurrentThread();
     }
 }
 
@@ -521,13 +529,15 @@ void NfxWinProc::onWmMouseLeave(HWND hWnd) {
  * that it will be fired only once even if called multiple times.
  */
 void NfxWinProc::fireStateChangedLaterOnce() {
-    JNIEnv *attachedEnv;
-    jint attachResult = jvm->AttachCurrentThread((void **) &attachedEnv, nullptr);
-    if (attachResult != JNI_OK) {
-        return;
+    JniAttachGuard guard(jvm);
+    JNIEnv *at_env = guard.env();
+    if (!at_env) return;
+
+    at_env->CallVoidMethod(obj, fireStateChangeMID);
+
+    if (at_env->ExceptionCheck()) {
+        at_env->ExceptionClear();
     }
-    attachedEnv->CallVoidMethod(obj, fireStateChangeMID);
-    jvm->DetachCurrentThread();
 }
 
 /**

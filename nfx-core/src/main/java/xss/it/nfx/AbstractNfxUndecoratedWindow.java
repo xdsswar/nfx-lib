@@ -12,21 +12,20 @@
 
 package xss.it.nfx;
 
-import com.sun.it.nfx.Rect;
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.css.PseudoClass;
 import javafx.event.Event;
 import javafx.event.EventType;
-import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.paint.Color;
-import javafx.stage.Screen;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -75,21 +74,54 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      */
     public static final EventType<WindowEvent> BACKGROUND_CHANGE = new EventType<>(Event.ANY, "BACKGROUND_CHANGE");
 
-    /**
-     * Custom timer to handel hitSpot events
-     */
-    private Timer timer;
 
     /**
      * HitSpots
      */
-    private final List<HitSpot> HIT_SPOTS;
+    private volatile List<HitSpot> HIT_SPOTS = new CopyOnWriteArrayList<>();
 
     /**
      * Prev WindowState
      */
     protected WindowState prevState = null;
 
+    /**
+     * Custom pseudo-class applied to the Close button when the title-bar hit test
+     * indicates the pointer is over the close area. Use in CSS like:
+     *   .my-close:ht-close { ... }
+     *   .my-close:ht-close > .graphic > .shape { ... }
+     * Toggle via: node.pseudoClassStateChanged(HT_CLOSE_CLASS, true/false).
+     */
+    protected static final PseudoClass HT_CLOSE_CLASS = PseudoClass.getPseudoClass("ht-close");
+
+    /**
+     * Custom pseudo-class applied to the Maximize/Restore button when the pointer
+     * is over its title-bar spot. Example CSS:
+     *   .my-max:ht-max { ... }
+     */
+    protected static final PseudoClass HT_MAX_CLASS = PseudoClass.getPseudoClass("ht-max");
+
+    /**
+     * Custom pseudo-class applied to the Minimize button when the pointer is over
+     * its title-bar spot. Example CSS:
+     *   .my-min:ht-min { ... }
+     */
+    protected static final PseudoClass HT_MIN_CLASS = PseudoClass.getPseudoClass("ht-min");
+
+    /**
+     * Pseudo-class applied when the hit test reports a client area (Win32 HTCLIENT).
+     * Use it to style controls in a custom title bar while the pointer is over
+     * client regions.
+     * <p>
+     * CSS example: .my-client:ht-client { ... }
+     * Toggle with: node.pseudoClassStateChanged(HT_CLIENT_CLASS, true/false);
+     */
+    protected static final PseudoClass HT_CLIENT_CLASS = PseudoClass.getPseudoClass("ht-client");
+
+    /**
+     * Spots validation debounce
+     */
+    private final PauseTransition hitSpotsDebounce = new  PauseTransition(Duration.millis(300));
 
     /**
      * Constructs a new AbstractNfxUndecoratedWindow with default settings.
@@ -107,9 +139,10 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      */
     public AbstractNfxUndecoratedWindow(boolean hideFromTaskBar){
         super();
-        HIT_SPOTS = new CopyOnWriteArrayList<>();
         initialize();
-        setHideFromTaskBar(hideFromTaskBar);
+        if (NfxUtil.isWindows()) {
+            setHideFromTaskBar(hideFromTaskBar);
+        }
     }
 
     /**
@@ -117,83 +150,88 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * This method performs any necessary initialization steps for the window.
      */
     private void initialize(){
-        nfxUtilProperty().addListener((obs, o, nfxUtil) -> {
-            if (nfxUtil != null){
-                install(nfxUtil.getHWnd());
-                update(isMaximized(), isFullScreen());
-                hideFromTaskBar(nfxUtil.getHWnd(),getHideFromTaskBar());
-                hideFromTaskBarProperty().addListener((obs1, o1, hide)
-                        -> hideFromTaskBar(nfxUtil.getHWnd(), hide));
-
-                if (isMaximized()) setWindowState(WindowState.MAXIMIZED);
-                maximizedProperty().addListener((obs1, o1, max) -> {
-                    if (max) {
-                        setWindowState(WindowState.MAXIMIZED);
-                    }
-                    else {
-                        if (!isFullScreen() && !isIconified()){
-                            setWindowState(WindowState.NORMAL);
-                        }
-                    }
-                    invalidateSpots();
-                    updateHitSpots();
-                });
-
-                if (isFullScreen()) setWindowState(WindowState.FULL_SCREEN);
-                fullScreenProperty().addListener((obs1, o1, full) -> {
-                    if (full) {
-                        setWindowState(WindowState.FULL_SCREEN);
-                    }
-                    else {
-                        if (!isMaximized() && !isIconified()){
-                            setWindowState(WindowState.NORMAL);
-                        }
-                    }
-                    invalidateSpots();
-                    updateHitSpots();
-                });
-
-                if (isIconified()) setWindowState(WindowState.MINIMIZED);
-
-                iconifiedProperty().addListener((obs1, o1, min) -> {
-                    if (min) {
-                        setWindowState(WindowState.MINIMIZED);
-                    }
-                    else {
-                        if (prevState != null){
-                            setWindowState(prevState);
-                        }
-                    }
-                    invalidateSpots();
-                    updateHitSpots();
-                });
-
-                //State
-                handleState(getWindowState());
-
-                windowStateProperty().addListener((ob, old, state) -> {
-                    if (WindowState.MINIMIZED != old){
-                        prevState = old;
-                    }
-                    handleState(state);
-                });
-
-                cornerPreferenceProperty().addListener(observable -> {
-                    invalidateSpots();
+        if (NfxUtil.isWindows()) {
+            nfxUtilProperty().addListener((obs, o, nfxUtil) -> {
+                if (nfxUtil != null) {
+                    install(nfxUtil.getHWnd());
                     update(isMaximized(), isFullScreen());
-                    updateHitSpots();
-                });
+                    hideFromTaskBar(nfxUtil.getHWnd(), getHideFromTaskBar());
+                    hideFromTaskBarProperty().addListener((obs1, o1, hide)
+                            -> hideFromTaskBar(nfxUtil.getHWnd(), hide));
 
-                windowBorderProperty().addListener((observableValue, color, t1) -> {
-                    invalidateSpots();
-                    update(isMaximized(), isFullScreen());
-                    updateHitSpots();
-                });
+                    if (isMaximized()) setWindowState(WindowState.MAXIMIZED);
+                    maximizedProperty().addListener((obs1, o1, max) -> {
+                        if (max) {
+                            setWindowState(WindowState.MAXIMIZED);
+                        } else {
+                            if (!isFullScreen() && !isIconified()) {
+                                setWindowState(WindowState.NORMAL);
+                            }
+                        }
+                        invalidateSpots();
+                        updateHitSpots();
+                    });
 
-                sceneProperty().addListener((obs1, scene, s) -> refresh());
-                updateHitSpots();
-            }
-        });
+                    if (isFullScreen()) setWindowState(WindowState.FULL_SCREEN);
+                    fullScreenProperty().addListener((obs1, o1, full) -> {
+                        if (full) {
+                            setWindowState(WindowState.FULL_SCREEN);
+                        } else {
+                            if (!isMaximized() && !isIconified()) {
+                                setWindowState(WindowState.NORMAL);
+                            }
+                        }
+                        invalidateSpots();
+                        updateHitSpots();
+                    });
+
+                    if (isIconified()) setWindowState(WindowState.MINIMIZED);
+
+                    iconifiedProperty().addListener((obs1, o1, min) -> {
+                        if (min) {
+                            setWindowState(WindowState.MINIMIZED);
+                        } else {
+                            if (prevState != null) {
+                                setWindowState(prevState);
+                            }
+                        }
+                        invalidateSpots();
+                        updateHitSpots();
+                    });
+
+                    //State
+                    handleState(getWindowState());
+
+                    windowStateProperty().addListener((ob, old, state) -> {
+                        if (WindowState.MINIMIZED != old) {
+                            prevState = old;
+                        }
+                        handleState(state);
+                    });
+
+                    cornerPreferenceProperty().addListener(observable -> {
+                        invalidateSpots();
+                        update(isMaximized(), isFullScreen());
+                        updateHitSpots();
+                    });
+
+                    windowBorderProperty().addListener((observableValue, color, t1) -> {
+                        invalidateSpots();
+                        update(isMaximized(), isFullScreen());
+                        updateHitSpots();
+                    });
+
+                    sceneProperty().addListener((obs1, scene, s) -> refresh());
+                    updateHitSpots();
+                }
+
+                //Timer
+                hitSpotsDebounce.setOnFinished(e -> {
+                    HIT_SPOTS.clear();
+                    HIT_SPOTS.addAll(getHitSpots());
+                });
+            });
+        }
     }
 
     /**
@@ -244,7 +282,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      *
      * @return The ObjectProperty for windowBackground.
      */
-    public final ObjectProperty<Color> windowBackgroundProperty() {
+    protected ObjectProperty<Color> windowBackgroundProperty() {
         if (windowBackground == null) {
             windowBackground = new SimpleObjectProperty<>(this, "windowBackground");
         }
@@ -256,7 +294,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      *
      * @return The window's background color.
      */
-    public final Color getWindowBackground() {
+    protected Color getWindowBackground() {
         return windowBackgroundProperty().get();
     }
 
@@ -265,7 +303,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      *
      * @param windowBackground The background color to set.
      */
-    public final void setWindowBackground(Color windowBackground) {
+    protected void setWindowBackground(Color windowBackground) {
         this.windowBackgroundProperty().set(windowBackground);
     }
 
@@ -311,7 +349,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * This method provides a final update mechanism that calls {@code refresh} to refresh
      * the state or content, ensuring the most recent data or UI changes are applied.
      */
-    public final void update(){
+    protected void update(){
         refresh();
     }
 
@@ -319,20 +357,15 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * Updates the hit spots in the window.
      */
     private void updateHitSpots(){
-        EventQueue.invokeLater( () -> {
-            if( timer != null ) {
-                timer.restart();
-                return;
-            }
-
-            timer = new Timer( 300, e -> {
-                timer = null;
-                HIT_SPOTS.clear();
-                HIT_SPOTS.addAll(getHitSpots());
-            } );
-            timer.setRepeats( false );
-            timer.start();
-        } );
+        if (Platform.isFxApplicationThread()) {
+            hitSpotsDebounce.stop();
+            hitSpotsDebounce.playFromStart();
+        } else {
+            Platform.runLater(() -> {
+                hitSpotsDebounce.stop();
+                hitSpotsDebounce.playFromStart();
+            });
+        }
     }
 
     /**
@@ -347,9 +380,8 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                 setFullScreen(false);
                 setIconified(false);
             }
-            case MAXIMIZED -> setMaximized(true);
+            case MAXIMIZED, FULL_SCREEN -> setMaximized(true);
             case MINIMIZED -> setIconified(true);
-            case FULL_SCREEN -> setFullScreen(true);
         }
 
         update(isMaximized(), isFullScreen());
@@ -362,8 +394,10 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * Triggers an update to refresh the entire window and its spots
      */
     public final void refresh(){
-        invalidateSpots();
-        updateHitSpots();
+        if (NfxUtil.isWindows()) {
+            invalidateSpots();
+            updateHitSpots();
+        }
     }
 
     /**
@@ -371,7 +405,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      *
      * @return A list of HitSpot objects.
      */
-    public abstract List<HitSpot> getHitSpots();
+    protected abstract List<HitSpot> getHitSpots();
 
 
     /**
@@ -379,7 +413,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      *
      * @return The height of the title bar.
      */
-    public abstract double getTitleBarHeight();
+    protected abstract double getTitleBarHeight();
 
 
     /**
@@ -389,7 +423,9 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * @param full Whether the window should be in full-screen mode.
      */
     protected final void update(boolean max, boolean full) {
-        update(getNfxUtil().getHWnd(), isMaximized(), isFullScreen());
+        if (NfxUtil.isWindows()) {
+            update(getNfxUtil().getHWnd(), isMaximized(), isFullScreen());
+        }
     }
 
 
@@ -442,16 +478,12 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * @return The hit test result code.
      */
     private int jniHitTest(int x, int y, boolean isOnResizeBorder ) {
-        Point2D pt = scaleDown(new Point2D(x, y));
-        int sx = (int) pt.getX();
-        int sy = (int) pt.getY();
-
-        boolean isOnTitleBar = sy < (getWindowState() == WindowState.MAXIMIZED ? (getTitleBarHeight() + 5) : getTitleBarHeight());
+        boolean isOnTitleBar = y < getTitleBarHeight();
         HitSpot newHoveredSpot = null; // Track the new spot being hovered
 
         if (isOnTitleBar) {
             for (HitSpot spot : HIT_SPOTS) {
-                if (contains(spot.getRect(), sx, sy)) {
+                if (contains(spot.getRect(), x, y)) {
                     newHoveredSpot = spot;
                     break; // Found the hovered spot, exit loop
                 }
@@ -476,13 +508,13 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                 if (newHoveredSpot.isClose()) return HT_CLOSE;
                 if (newHoveredSpot.isClient()) return HT_CLIENT;
             }
-        } else {
+        }
+        else {
             currentHoveredSpot = null;
         }
         invalidateSpots();
         // Return based on title bar and resize border status
         return isOnTitleBar ? (isOnResizeBorder ? HT_TOP : HT_CAPTION) : (isOnResizeBorder ? HT_TOP : HT_CLIENT);
-
     }
 
 
@@ -544,42 +576,9 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
 
 
     /**
-     * Scales down the given Point2D object based on the output scale of the current Screen.
-     *
-     * @param point The Point2D object to scale down.
-     * @return The scaled down Point2D object.
-     */
-    private Point2D scaleDown(Point2D point) {
-        Screen screen= Rect.getCurrentScreen(this);
-        double scaleX = screen.getOutputScaleX();
-        double scaleY = screen.getOutputScaleY();
-        double scaledX = point.getX() / scaleX;
-        double scaledY = point.getY() / scaleY;
-        return new Point2D(scaledX, scaledY);
-    }
-
-    /**
-     * Rounds the given double value and returns it as an integer, clipping it to stay within the range of Integer.MIN_VALUE and Integer.MAX_VALUE.
-     *
-     * @param value The double value to round.
-     * @return The rounded integer value, clipped to the range of Integer.MIN_VALUE and Integer.MAX_VALUE.
-     */
-    @Deprecated
-    private int clipRound( double value ) {
-        value -= 0.5;
-        if( value < Integer.MIN_VALUE )
-            return Integer.MIN_VALUE;
-        if( value > Integer.MAX_VALUE )
-            return Integer.MAX_VALUE;
-        return (int) Math.ceil( value );
-    }
-
-
-    /**
      * Invalidates the hit spots by setting their hover state to false.
      */
     protected final void invalidateSpots(){
         HIT_SPOTS.forEach(hitSpot -> hitSpot.setHovered(false));
     }
-
 }

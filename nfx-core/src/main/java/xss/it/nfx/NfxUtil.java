@@ -54,7 +54,12 @@ public final class NfxUtil {
      * @param window The window object for which the native handle is to be retrieved.
      */
     public NfxUtil(Window window){
-        this.hWnd = getNativeHandle(window);
+       if (windows10OrLater) {
+           this.hWnd = getNativeHandle(window);
+       }
+       else {
+           hWnd = 0L;
+       }
     }
 
     /**
@@ -63,6 +68,7 @@ public final class NfxUtil {
      * @return The native handle of the window.
      */
     public long getHWnd() {
+        if (!windows10OrLater) return 0L;
         return hWnd;
     }
 
@@ -72,6 +78,7 @@ public final class NfxUtil {
      * @param color The color object representing the desired title bar color.
      */
     public void setTitleBarColor(Color color){
+        if (!windows10OrLater) return;
         setTitleBarColor(hWnd, color.getRed(), color.getGreen(), color.getBlue());
     }
 
@@ -81,6 +88,7 @@ public final class NfxUtil {
      * @param hexColor The hexadecimal color string representing the desired title bar color.
      */
     public void setTitleBarColor(String hexColor){
+        if (!windows10OrLater) return;
         setTitleBarColor(hexToColor(hexColor));
     }
 
@@ -91,6 +99,7 @@ public final class NfxUtil {
      * @param color The color object representing the desired title bar color.
      */
     public void setCaptionColor(Color color){
+        if (!windows10OrLater) return;
         setTextColor(hWnd, color.getRed(), color.getGreen(), color.getBlue());
     }
 
@@ -100,6 +109,7 @@ public final class NfxUtil {
      * @param hexColor The hexadecimal color string representing the desired title bar color.
      */
     public void setCaptionColor(String hexColor){
+        if (!windows10OrLater) return;
         setCaptionColor(hexToColor(hexColor));
     }
 
@@ -109,7 +119,7 @@ public final class NfxUtil {
      * @param cornerPref The corner preference to set
      */
     public void setCornerPref(CornerPreference cornerPref) {
-        if (cornerPref == null) return;
+        if (cornerPref == null || !windows10OrLater) return;
         switch (cornerPref) {
             case NOT_ROUND -> setCornerPreference(hWnd, DWM_WCP_DO_NOT_ROUND);
             case ROUND -> setCornerPreference(hWnd, DWM_WCP_ROUND);
@@ -124,7 +134,7 @@ public final class NfxUtil {
      * @param color The color to set as the border color
      */
     public void setBorderColor(Color color) {
-        if (color == null) return;
+        if (color == null || !windows10OrLater) return;
         setBorderColor(hWnd, (int) color.getRed(), (int) color.getGreen(), (int) color.getBlue());
     }
 
@@ -135,7 +145,9 @@ public final class NfxUtil {
      * @param title The title of the window to focus.
      */
     public static void focusWindowByTitle(String title){
-        focusWindow(title);
+        if (windows10OrLater) {
+            focusWindow(title);
+        }
     }
 
 
@@ -226,6 +238,13 @@ public final class NfxUtil {
         return Color.web(hex);
     }
 
+    /**
+     * Check if we are on windows
+     * @return tue if yes
+     */
+    public static boolean isWindows(){
+        return windows10OrLater;
+    }
 
     /*
      * =================================================================================================================
@@ -235,12 +254,15 @@ public final class NfxUtil {
      *
      * =================================================================================================================
      */
-
+    /**
+     * Windows flag
+     */
+    private static final boolean windows10OrLater;
 
     /**
      * Version
      */
-    private static final String VERSION = "1.0.2";
+    private static final String VERSION = "1.0.3";
 
     /**
      * Name of the library file.
@@ -320,14 +342,66 @@ public final class NfxUtil {
         }
     }
 
+    /**
+     * Returns {@code true} only on Windows 10 or later.
+     * <p>
+     * Checks {@code os.name} starts with "Windows" (case-insensitive) and parses
+     * {@code os.version}'s leading numeric portion (e.g., "10.0", "6.3"). Returns
+     * {@code true} iff the parsed version is {@code >= 10.0}.
+     * <br>
+     * Note: Many JDKs report Windows 11 as {@code os.name="Windows 10"} with
+     * {@code os.version="10.0"}, which still satisfies the {@code >= 10.0} check.
+     *
+     * @return {@code true} if running on Windows and {@code os.version >= 10.0}, else {@code false}
+     */
+    public static boolean isWindows10OrLater() {
+        String name = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
+        if (!name.startsWith("windows")) return false;
+
+        String ver = System.getProperty("os.version", "");
+        double v = parseLeadingVersion(ver);
+        return v >= 10.0;
+    }
+
+    /**
+     * Parses the leading numeric portion of a version string (e.g., "10.0", "6.3").
+     * @param s version
+     * @return double
+     */
+    private static double parseLeadingVersion(String s) {
+        if (s == null || s.isEmpty()) return -1;
+        int i = 0;
+        boolean seenDot = false;
+        StringBuilder sb = new StringBuilder(8);
+        while (i < s.length()) {
+            char c = s.charAt(i++);
+            if (c >= '0' && c <= '9') {
+                sb.append(c);
+            } else if (c == '.' && !seenDot) {
+                seenDot = true;
+                sb.append(c);
+            } else {
+                break; // stop at first non [0-9 or one dot]
+            }
+        }
+        try {
+            return Double.parseDouble(sb.toString());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
     /*
      * Initialize and load the Jni
      */
     static {
-        try {
-            init();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        windows10OrLater = isWindows10OrLater();
+        if (windows10OrLater) {
+            try {
+                init();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
 package xss.it.nfx;
 
-import com.sun.it.nfx.Rect;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.layout.Region;
 
@@ -58,7 +58,7 @@ public final class HitSpot {
      */
     private HitSpot(Builder builder) {
         if (builder.window == null){
-            throw new NullPointerException("AbstractNfxUndecoratedWindow can't be null");
+            throw new NullPointerException("Window can't be null");
         }
         this.window = builder.window;
         this.control = builder.control;
@@ -163,10 +163,25 @@ public final class HitSpot {
      * @return The Rectangle2D representing the bounds of the HitSpot.
      */
     public Rectangle2D getRect(){
-        return Rect.createFromBounds(control.localToScene(
+        return createFromBounds(control.localToScene(
                 control.getBoundsInLocal()),
                 window.getWindowState()== WindowState.MAXIMIZED
         );
+    }
+
+    /**
+     * Creates a {@link javafx.geometry.Rectangle2D} from the given {@link javafx.geometry.Bounds}.
+     * Copies {@code minX/minY} to {@code x/y} and {@code width/height} as-is, preserving
+     * the coordinate space of the supplied bounds.
+     *
+     * @param bounds the bounds to convert (must not be null)
+     * @param max    optional hint for maximized layouts; currently not used
+     * @return a Rectangle2D with {@code x = bounds.minX}, {@code y = bounds.minY},
+     *         {@code width = bounds.width}, {@code height = bounds.height}
+     */
+
+    public static Rectangle2D createFromBounds(Bounds bounds, boolean max){
+        return new Rectangle2D(bounds.getMinX(), bounds.getMinY(), bounds.getWidth(),bounds.getHeight());
     }
 
     /**

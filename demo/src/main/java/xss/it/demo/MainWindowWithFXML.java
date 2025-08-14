@@ -28,7 +28,7 @@ import java.util.ResourceBundle;
 public class MainWindowWithFXML extends NfxWindow implements Initializable {
     @FXML
     private Button openCustomDialogBtn, openUndecoratedBtn,
-            openCustomDialogHiddenFromTaskBarBtn, menuFxWindowBtn;
+            openCustomDialogHiddenFromTaskBarBtn, menuFxWindowBtn, updateDemoBtn;
 
     /**
      * Constructs a new instance of MainWindowWithFXML.
@@ -80,6 +80,11 @@ public class MainWindowWithFXML extends NfxWindow implements Initializable {
                     new Image(Assets.load("/icon.png").toExternalForm())
             );
             menuWindow.show();
+        });
+
+        updateDemoBtn.setOnAction(event -> {
+            NfxDemoWindow window = new NfxDemoWindow();
+            window.show();
         });
     }
 }

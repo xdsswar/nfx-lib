@@ -12,6 +12,7 @@
 
 package xss.it.demo;
 
+import javafx.css.PseudoClass;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
@@ -71,7 +72,9 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
         minBtn.setOnAction(event -> setWindowState(WindowState.MINIMIZED));
 
         handelState(getWindowState());
-        windowStateProperty().addListener((obs, o, state) -> handelState(state));
+        windowStateProperty().addListener((obs, o, state) -> {
+            handelState(state);
+        });
     }
 
     /**
@@ -103,12 +106,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
                 .build();
 
         minimizeHitSpot.hoveredProperty().addListener((obs, o, hovered) -> {
-            if (hovered){
-                minimizeHitSpot.getControl().getStyleClass().add("hit-hovered");
-            }
-            else {
-                minimizeHitSpot.getControl().getStyleClass().remove("hit-hovered");
-            }
+            minimizeHitSpot.getControl().pseudoClassStateChanged(HT_MIN_CLASS, hovered);
         });
 
         HitSpot maximizeHitSpot = HitSpot.builder()
@@ -118,12 +116,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
                 .build();
 
         maximizeHitSpot.hoveredProperty().addListener((obs, o, hovered) -> {
-            if (hovered){
-                maximizeHitSpot.getControl().getStyleClass().add("hit-hovered");
-            }
-            else {
-                maximizeHitSpot.getControl().getStyleClass().remove("hit-hovered");
-            }
+            maximizeHitSpot.getControl().pseudoClassStateChanged(HT_MAX_CLASS, hovered);
         });
 
         HitSpot closeHitSpot = HitSpot.builder()
@@ -133,14 +126,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
                 .build();
 
         closeHitSpot.hoveredProperty().addListener((obs, o, hovered) -> {
-            if (hovered){
-                closeHitSpot.getControl().getStyleClass().add("hit-close-btn");
-                closeBtn.getGraphic().getStyleClass().add("shape-close-hovered");
-            }
-            else {
-                closeHitSpot.getControl().getStyleClass().remove("hit-close-btn");
-                closeBtn.getGraphic().getStyleClass().remove("shape-close-hovered");
-            }
+            closeHitSpot.getControl().pseudoClassStateChanged(HT_CLOSE_CLASS, hovered);
         });
 
 
@@ -149,6 +135,7 @@ public class MenuWindow extends AbstractNfxUndecoratedWindow implements Initiali
                 .window(this)
                 .control(menuBar)
                 .build();
+
 
         return List.of(minimizeHitSpot, maximizeHitSpot, closeHitSpot, bar);
     }

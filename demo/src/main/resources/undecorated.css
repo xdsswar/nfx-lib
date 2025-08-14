@@ -6,36 +6,7 @@
     -fx-background-color: #06603A;
 }
 
-.hit-btn{
-    -fx-min-width: 46;
-    -fx-max-width: 46;
-    -fx-pref-width: 46;
-    -fx-min-height: 26;
-    -fx-pref-height: 26;
-    -fx-max-height: 26;
-    -fx-border-radius: 0;
-    -fx-background-radius: 0;
-    -fx-background-insets: 0;
-    -fx-background-color: #F3F3F3;
-}
 
-.hit-hovered{
-    -fx-background-color: rgba(150, 150, 150, 0.32);
-}
-
-.hit-close-btn{
-    -fx-background-color: #C42B1C;
-    -fx-text-fill: #ffffff;
-}
-
-
-.shape{
-    -fx-fill: #464646;
-}
-
-.shape-close-hovered{
-    -fx-fill: #F9F9F9;
-}
 
 
 .menu-bar{
@@ -89,12 +60,45 @@ menu{
     -fx-border-width: 0 0 1 0;
 }
 
-/**
-    Little example to set title font size in AbstractNfxUndecoratedWindow types
- */
-
 .my-title{
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: #ad1d1d;
     -fx-font-size: 20;
     -fx-font-weight: bold;
+}
+
+/**
+=====================================================================
+ */
+.close,
+.hit-btn{
+    -fx-min-width: 46;
+    -fx-max-width: 46;
+    -fx-pref-width: 46;
+    -fx-min-height: 26;
+    -fx-pref-height: 26;
+    -fx-max-height: 26;
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-background-color: #F3F3F3;
+}
+
+.shape{
+    -fx-fill: #464646;
+}
+
+/* Button background when close area is “hovered” */
+.close:ht-close {
+    -fx-background-color: #C42B1C;
+}
+
+
+/* Style the actual graphic node inside */
+.close:ht-close > .shape {
+    -fx-fill: white;
+}
+
+.hit-btn:ht-min,
+.hit-btn:ht-max{
+    -fx-background-color: rgba(150, 150, 150, 0.32);
 }

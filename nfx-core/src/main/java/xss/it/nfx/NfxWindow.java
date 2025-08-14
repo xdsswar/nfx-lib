@@ -21,8 +21,6 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 
-import java.util.Objects;
-
 /**
  * @author XDSSWAR
  * Created on 04/13/2024
@@ -85,8 +83,6 @@ public  class NfxWindow extends Stage {
                     getNfxUtil().setCaptionColor(color);
                 }
             });
-
-
         });
         pt.play();
     };
@@ -104,7 +100,9 @@ public  class NfxWindow extends Stage {
      * Initializes the NfxWindow.
      */
     private void initialize(){
-        setOnShowing(LISTENER);
+        if (NfxUtil.isWindows()) {
+            setOnShowing(LISTENER);
+        }
     }
 
 
@@ -312,18 +310,4 @@ public  class NfxWindow extends Stage {
      * @param full Whether the window should be in full-screen mode.
      */
     protected void update(boolean max, boolean full){}
-
-
-
-
-    private record TempFont(String name, int size, int weight) {
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof TempFont tempFont)) return false;
-            return size == tempFont.size && weight == tempFont.weight && Objects.equals(name, tempFont.name);
-        }
-
-    }
 }
