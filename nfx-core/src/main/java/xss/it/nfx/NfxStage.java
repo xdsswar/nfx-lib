@@ -17,6 +17,7 @@ import javafx.scene.control.Control;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
+import javafx.stage.WindowEvent;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -154,6 +155,8 @@ public abstract class NfxStage extends AbstractNfxUndecoratedWindow {
         closeHandler = e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
                 e.consume();
+                //This is necessary to forward the close request event since its not fired automatically in current config
+                this.fireEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSE_REQUEST));
                 close();
             }
         };
