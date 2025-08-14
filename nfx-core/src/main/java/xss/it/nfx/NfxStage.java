@@ -279,6 +279,18 @@ public abstract class NfxStage extends AbstractNfxUndecoratedWindow {
         spotsDirty = false;
     }
 
+    /**
+     * Returns the cached {@link HitSpot} for the given {@link Region}, creating and caching
+     * it on first use. On creation, a listener is attached that toggles the {@code :ht-client}
+     * pseudo-class on the region while the spot is hovered. The cache is identity-based
+     * (one {@code HitSpot} per {@code Region}).
+     * <p>
+     * Call on the JavaFX Application Thread.
+     *
+     * @param r the region to associate with a {@code HitSpot} (non-null)
+     * @return the cached or newly created {@code HitSpot} for {@code r}
+     */
+
     private HitSpot spotFor(Region r) {
         return regionSpotCache.computeIfAbsent(r, rr -> {
             HitSpot ht = HitSpot.builder()
