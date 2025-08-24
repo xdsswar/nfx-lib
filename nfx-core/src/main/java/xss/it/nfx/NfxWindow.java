@@ -34,10 +34,16 @@ public  class NfxWindow extends Stage {
     private final ObjectProperty<NfxUtil> nfxUtil;
 
     /**
+     * Flag to determine is window was already shown
+     */
+    protected volatile  boolean firstShowAlready = false;
+
+    /**
      * A private final member representing an EventHandler for WindowEvent.
      * This EventHandler listens for WindowEvents and handles them accordingly.
      */
     private final EventHandler<WindowEvent> LISTENER = windowEvent -> {
+        firstShowAlready = true;
         /*
          * TODO : Hope this fix the flicker at shown
          */
@@ -103,6 +109,7 @@ public  class NfxWindow extends Stage {
     private void initialize(){
         if (NfxUtil.isWindows()) {
             addEventHandler(WindowEvent.WINDOW_SHOWING, LISTENER);
+
         }
     }
 

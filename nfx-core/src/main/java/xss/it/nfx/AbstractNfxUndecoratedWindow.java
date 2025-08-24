@@ -232,6 +232,16 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
                 });
             });
         }
+
+        addEventHandler(WindowEvent.WINDOW_SHOWN, e->{
+            if (firstShowAlready) {
+                updateOnStateLost();
+            }
+        });
+
+        addEventHandler(WindowEvent.WINDOW_HIDDEN, e->{
+            uninstall();
+        });
     }
 
     /**
@@ -410,8 +420,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * to ensure the UI is updated.
      * </p>
      */
-    protected void updateOnStateLost(){
-        uninstall();
+    private void updateOnStateLost(){
         if (NfxUtil.isWindows()) {
             ensureNfx();
             install(getNfxUtil().getHWnd());
@@ -450,7 +459,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
     /**
      * Uninstall the system
      */
-    protected final void uninstall(){
+    private void uninstall(){
         if (NfxUtil.isWindows()){
             ensureNfx();
             uninstall(getNfxUtil().getHWnd());
