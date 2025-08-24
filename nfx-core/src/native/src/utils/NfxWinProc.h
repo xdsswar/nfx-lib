@@ -46,6 +46,17 @@ public:
      */
     static HWND install(JNIEnv *env, jobject obj, HWND hwnd);
 
+
+    /**
+     * Uninstalls the window using native code.
+     *
+     * @param env  The JNI environment
+     * @param obj  The Java object instance
+     * @param hwnd The handle of the window to install
+     * @return The handle of the installed window
+     */
+    static void uninstall(JNIEnv *env, jobject obj, HWND hwnd);
+
     /**
      * Updates the window state using native code.
      *

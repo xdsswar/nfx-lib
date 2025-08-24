@@ -134,6 +134,48 @@ HWND NfxWinProc::install(JNIEnv *env, jobject obj, HWND hWnd) {
     return hWnd;
 }
 
+
+/**
+ * Uninstall the Java environment and object associated with the NfxWinProc instance.
+ * This method is typically called to establish the JNI environment and associate it with the NfxWinProc instance.
+ *
+ * @param env   The JNI environment pointer.
+ * @param obj   The Java object associated with the NfxWinProc instance.
+ * @param hWnd  The handle to the window.
+ * @return      The handle to the window after installation.
+ */
+void NfxWinProc::uninstall(JNIEnv *env, jobject obj, HWND hWnd) {
+    if (initialized < 0)
+        return;
+
+    if (hwndMap == nullptr) {
+        hwndMap = new HwndMap();
+        if (hwndMap == nullptr)
+            return ;
+    }
+
+    if (hWnd == nullptr) {
+        return;
+    }
+
+    auto* wp = static_cast<NfxWinProc *>(hwndMap->get(hWnd));
+    if (wp == nullptr) {
+        return;
+    }
+
+    hwndMap->remove(hWnd);
+
+    ::SetWindowLongPtr(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wp->defaultWndProc));
+
+    env->DeleteGlobalRef(wp->obj);
+    if (wp->background != nullptr) {
+        ::DeleteObject(wp->background);
+    }
+
+    delete wp;
+}
+
+
 /**
  * Updates the specified window with the given parameters.
  *
@@ -669,6 +711,18 @@ extern "C"
 JNIEXPORT void JNICALL Java_xss_it_nfx_AbstractNfxUndecoratedWindow_install
 (JNIEnv *env, jobject obj, jlong hWnd) {
     NfxWinProc::install(env, obj, to_hwnd(hWnd));
+}
+
+
+/**
+ * Uninstalls the window.
+ *
+ * @param hWnd The handle of the window to install
+ */
+extern "C"
+JNIEXPORT void JNICALL Java_xss_it_nfx_AbstractNfxUndecoratedWindow_uninstall
+  (JNIEnv *env, jobject obj, jlong hWnd) {
+    NfxWinProc::uninstall(env, obj, to_hwnd(hWnd));
 }
 
 /**

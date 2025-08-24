@@ -400,6 +400,25 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
         }
     }
 
+
+    /**
+     * Called when the window state has been lost (e.g., after focus changes or OS-level events).
+     * <p>
+     * On Windows platforms, if a valid native window handle ({@code hwnd}) exists,
+     * this method reinstalls the necessary hooks for the window. After handling
+     * platform-specific reinstallation, it always triggers a {@link #refresh()}
+     * to ensure the UI is updated.
+     * </p>
+     */
+    protected void updateOnStateLost(){
+        uninstall();
+        if (NfxUtil.isWindows()) {
+            ensureNfx();
+            install(getNfxUtil().getHWnd());
+        }
+        refresh();
+    }
+
     /**
      * Gets a list of HitSpot objects associated with this object.
      *
@@ -428,6 +447,16 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
         }
     }
 
+    /**
+     * Uninstall the system
+     */
+    protected final void uninstall(){
+        if (NfxUtil.isWindows()){
+            ensureNfx();
+            uninstall(getNfxUtil().getHWnd());
+            resetNfx();
+        }
+    }
 
     /*
      * =================================================================================================================
@@ -448,6 +477,14 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
      * @param hWnd The handle of the window to install
      */
     private native void install(long hWnd);
+
+    /**
+     * This method will change the Window WinProc in the native side.
+     * This is only for window that extends from AbstractNfxUndecoratedWindow, do not use it in another normal window
+     *
+     * @param hWnd The handle of the window to install
+     */
+    private native void uninstall(long hWnd);
 
 
     /**

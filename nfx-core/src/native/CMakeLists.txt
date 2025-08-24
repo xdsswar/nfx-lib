@@ -4,7 +4,7 @@ set(THIS_LIB "nfx-core-win64")
 
 project(${THIS_LIB})
 
-set(VERSION "1.0.3")
+set(VERSION "1.0.4")
 
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_STANDARD 17)

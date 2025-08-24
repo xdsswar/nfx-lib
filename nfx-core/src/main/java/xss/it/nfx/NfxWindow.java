@@ -26,6 +26,7 @@ import javafx.util.Duration;
  * Created on 04/13/2024
  */
 public  class NfxWindow extends Stage {
+
     /**
      * A private member representing an ObjectProperty of type NfxUtil.
      * This ObjectProperty holds a reference to an instance of the NfxUtil class.
@@ -101,7 +102,7 @@ public  class NfxWindow extends Stage {
      */
     private void initialize(){
         if (NfxUtil.isWindows()) {
-            setOnShowing(LISTENER);
+            addEventHandler(WindowEvent.WINDOW_SHOWING, LISTENER);
         }
     }
 
@@ -129,10 +130,17 @@ public  class NfxWindow extends Stage {
      * Ensures that the NfxUtil instance is initialized.
      * If not initialized, creates a new instance.
      */
-    private void ensureNfx(){
+    protected void ensureNfx(){
         if (getNfxUtil() == null){
             nfxUtilProperty().set(new NfxUtil(this));
         }
+    }
+
+    /**
+     * Resets the nfx
+     */
+    protected void resetNfx(){
+        nfxUtilProperty().set(null);
     }
 
     /**

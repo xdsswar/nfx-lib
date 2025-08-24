@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'xss.it.nfx'
-version = '1.0.3'
+version = '1.0.4'
 
 def jarName = 'nfx-core'
 

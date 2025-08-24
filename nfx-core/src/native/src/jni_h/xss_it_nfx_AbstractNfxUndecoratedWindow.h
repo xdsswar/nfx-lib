@@ -25,6 +25,14 @@ extern "C" {
  JNIEXPORT void JNICALL Java_xss_it_nfx_AbstractNfxUndecoratedWindow_install
    (JNIEnv *, jobject, jlong);
 
+  /*
+ * Class:     xss_it_nfx_AbstractNfxUndecoratedWindow
+ * Method:    uninstall
+ * Signature: (J)V
+ */
+  JNIEXPORT void JNICALL Java_xss_it_nfx_AbstractNfxUndecoratedWindow_uninstall
+    (JNIEnv *, jobject, jlong);
+
  /*
   * Class:     xss_it_nfx_AbstractNfxUndecoratedWindow
   * Method:    update
