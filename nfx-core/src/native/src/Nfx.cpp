@@ -111,6 +111,9 @@ JNIEXPORT jboolean JNICALL Java_xss_it_nfx_NfxUtil_setBorderColor
 /**
  * Native method implementation for focusing a window with the specified name.
  *
+ * FIX: Issue #39 - Added null checks for str parameter and GetStringUTFChars return value.
+ * GetStringUTFChars can return nullptr on OutOfMemoryError.
+ *
  * @param env The JNI environment pointer.
  * @param cls The Java class calling the native method.
  * @param str The name of the window to focus as a JNI string.
@@ -118,7 +121,19 @@ JNIEXPORT jboolean JNICALL Java_xss_it_nfx_NfxUtil_setBorderColor
 extern "C"
 JNIEXPORT void JNICALL Java_xss_it_nfx_NfxUtil_focusWindow
 (JNIEnv *env, jclass cls, jstring str) {
+    // FIX: Issue #39 - Check if str is null
+    if (str == nullptr) {
+        return;
+    }
+
     const char *nativeWindowName = env->GetStringUTFChars(str, nullptr);
+
+    // FIX: Issue #39 - Check if GetStringUTFChars succeeded
+    if (nativeWindowName == nullptr) {
+        // OutOfMemoryError has been thrown by JVM, just return
+        return;
+    }
+
     HWND hwnd = FindWindow(nullptr, nativeWindowName);
     if (hwnd != nullptr) {
         ShowWindow(hwnd, SW_RESTORE);

@@ -269,8 +269,16 @@ private:
         return pt;
     }
 
-    // Helper: px -> DIP using the window's current DPI (Per-Monitor-V2 safe)
+    /**
+     * Helper: px -> DIP using the window's current DPI (Per-Monitor-V2 safe)
+     *
+     * FIX: Issue #3 - Added check for dpi==0 to prevent divide by zero.
+     */
     static int px_to_dip(int px, UINT dpi) {
+        // FIX: Issue #3 - Prevent divide by zero if dpi is 0
+        if (dpi == 0) {
+            dpi = 96; // Default to standard DPI
+        }
         return ::MulDiv(px, 96, static_cast<int>(dpi));  // round properly
     }
 

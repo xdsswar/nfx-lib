@@ -1,12 +1,10 @@
 plugins {
     id 'java'
     id 'application'
-    id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group 'xss.it.demo'
-
-java { toolchain { languageVersion = JavaLanguageVersion.of(21) }}
 
 repositories {
     mavenCentral()
@@ -23,7 +21,7 @@ tasks.withType(JavaCompile).configureEach {
 
 
 javafx {
-    version = '21.0.6'
+    version = '25.0.1'
     modules = ['javafx.controls', 'javafx.graphics', "javafx.fxml"]
 }
 

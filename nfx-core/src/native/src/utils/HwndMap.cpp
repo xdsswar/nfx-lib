@@ -3,6 +3,8 @@
  */
 #pragma once
 #include "HwndMap.h"
+#include <new>     // FIX: Issue #22 - Required for std::nothrow
+#include <climits> // FIX: Issue #33 - Required for INT_MAX
 
 #define DEFAULT_CAPACITY		20
 #define INCREASE_CAPACITY		10
@@ -52,6 +54,27 @@ HwndMap::HwndMap() {
 }
 
 /**
+ * Destructor for HwndMap.
+ * FIX: Issue #32 - Added destructor to clean up resources.
+ * Deletes the table array and destroys the CRITICAL_SECTION.
+ */
+HwndMap::~HwndMap() {
+    // Use a scoped block for the lock so it releases before DeleteCriticalSection
+    {
+        LOCK lock(&criticalSection);
+
+        if (table != nullptr) {
+            delete[] table;
+            table = nullptr;
+        }
+        size = 0;
+        capacity = 0;
+    }
+    // LOCK destructor has called LeaveCriticalSection, now safe to delete
+    ::DeleteCriticalSection(&criticalSection);
+}
+
+/**
  * Retrieves the value associated with the specified key in the map.
  *
  * @param key The HWND key to search for.
@@ -67,6 +90,8 @@ LPVOID HwndMap::get(HWND key) {
 /**
  * Associates the specified value with the specified key in the map.
  *
+ * FIX: Issue #22 - Now checks if ensureCapacity succeeded before proceeding.
+ *
  * @param key    The HWND key to associate the value with.
  * @param value  The value to be associated with the key.
  * @return       true if the value was successfully associated with the key, false otherwise.
@@ -80,6 +105,12 @@ bool HwndMap::put(HWND key, LPVOID value) {
         table[index].value = value;
     } else {
         ensureCapacity();
+
+        // FIX: Issue #22 - Check if ensureCapacity succeeded
+        if (table == nullptr || size >= capacity) {
+            return false; // Allocation failed
+        }
+
         // make room for new entry
         index = -(index + 1);
         for (int i = size - 1; i >= index; i--)
@@ -127,7 +158,9 @@ int HwndMap::binarySearch(HWND key) {
     int high = size - 1;
 
     while (low <= high) {
-        int mid = (low + high) >> 1;
+        // FIX: Issue #34 - Prevent integer overflow in midpoint calculation
+        // (low + high) could overflow for large values; use this safe form instead
+        int mid = low + ((high - low) >> 1);
 
         auto midKey = reinterpret_cast<__int64>(table[mid].key);
         if (midKey < ikey)
@@ -144,10 +177,20 @@ int HwndMap::binarySearch(HWND key) {
 /**
  * Ensures that the capacity of the map is sufficient to accommodate additional entries.
  * If necessary, the capacity of the map is increased.
+ *
+ * FIX: Issue #22 - Added null checks after allocation to handle out-of-memory conditions.
+ * Uses nothrow variant to avoid exceptions.
+ *
+ * @return true if capacity is sufficient, false if allocation failed
  */
 void HwndMap::ensureCapacity() {
     if (table == nullptr) {
-        table = new Entry[DEFAULT_CAPACITY];
+        // FIX: Issue #22 - Use nothrow and check for allocation failure
+        table = new(std::nothrow) Entry[DEFAULT_CAPACITY];
+        if (table == nullptr) {
+            // Allocation failed - capacity remains 0
+            return;
+        }
         capacity = DEFAULT_CAPACITY;
         return;
     }
@@ -159,8 +202,18 @@ void HwndMap::ensureCapacity() {
     }
 
     // allocate new table
+    // FIX: Issue #33 - Check for integer overflow before allocation
+    if (minCapacity > INT_MAX - INCREASE_CAPACITY) {
+        // Overflow would occur, allocation will fail
+        return;
+    }
     int newCapacity = minCapacity + INCREASE_CAPACITY;
-    auto *newTable = new Entry[newCapacity];
+    // FIX: Issue #22 - Use nothrow and check for allocation failure
+    auto *newTable = new(std::nothrow) Entry[newCapacity];
+    if (newTable == nullptr) {
+        // Allocation failed - keep existing table, operation will fail
+        return;
+    }
 
     // copy old table to new table
     for (int i = 0; i < capacity; i++) {
@@ -169,5 +222,5 @@ void HwndMap::ensureCapacity() {
     // delete old table
     delete[] table;
     table = newTable;
-    capacity = newCapacity;;
+    capacity = newCapacity;
 }

@@ -1,27 +1,33 @@
 plugins {
-    id 'org.openjfx.javafxplugin' version '0.0.13'
+    id 'java'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 group 'xss.it.nfx'
-version = '1.0.4'
+version = '1.0.5'
 
 def jarName = 'nfx-core'
+
+// Native library configuration
+def nativeLibName = "nfx-core-win64-${version}.dll"
+def nativeBuildDir = file("${projectDir}/src/native/cmake-build-release-visual-studio")
+def nativeResourceDir = file("${projectDir}/src/main/resources/lib")
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
-java { toolchain { languageVersion = JavaLanguageVersion.of(21) }}
+
 
 javafx {
-    version = '21.0.6'
+    version = '25.0.1'
     modules = ['javafx.controls', 'javafx.graphics']
 }
 
 
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: '../libs')
+
 }
 
 jar{
@@ -29,14 +35,14 @@ jar{
     manifest {
         attributes(
                 'name' : jarName,
-                'version': '1.0.3',
+                'version': '1.0.5',
                 'description': 'Native JavaFX utility',
                 'author': 'Xtreme Software Solutions (XSS&IT)'
         )
     }
 }
 
-def jniHeaderOutputDir = file("$buildDir/headers")
+def jniHeaderOutputDir = layout.buildDirectory.dir("headers")
 
 
 
@@ -47,9 +53,47 @@ tasks.register('generateHeaders') {
 tasks.register('headers', JavaCompile) {
     source = sourceSets.main.java
     classpath = sourceSets.main.runtimeClasspath
-    destinationDir = jniHeaderOutputDir
+    destinationDirectory = jniHeaderOutputDir
     source('xss/it/nfx/**/*.java')
     options.compilerArgs = [
-            "-h", jniHeaderOutputDir
+            "-h", jniHeaderOutputDir.get().asFile.absolutePath
     ] as List<String>
+}
+
+/**
+ * Task to copy the native DLL from cmake build directory to resources.
+ * Run this after building the native library with CMake.
+ * Usage: ./gradlew copyNativeLib
+ */
+tasks.register('copyNativeLib', Copy) {
+    description = 'Copies the native DLL from cmake build output to resources directory'
+    group = 'build'
+
+    from(nativeBuildDir) {
+        include nativeLibName
+    }
+    into nativeResourceDir
+
+    doFirst {
+        // Ensure the destination directory exists
+        nativeResourceDir.mkdirs()
+
+        def sourceFile = file("${nativeBuildDir}/${nativeLibName}")
+        if (!sourceFile.exists()) {
+            throw new GradleException("Native library not found: ${sourceFile.absolutePath}\n" +
+                    "Please build the native library first using CMake.")
+        }
+    }
+
+    doLast {
+        println "Copied ${nativeLibName} to ${nativeResourceDir}"
+    }
+}
+
+// Optionally make processResources depend on copyNativeLib if the file exists
+tasks.named('processResources') {
+    def sourceFile = file("${nativeBuildDir}/${nativeLibName}")
+    if (sourceFile.exists()) {
+        dependsOn 'copyNativeLib'
+    }
 }

@@ -24,6 +24,14 @@ public:
     HwndMap();
 
     /**
+     * Destroys the HwndMap object.
+     * FIX: Issue #32 - Added destructor to properly clean up resources.
+     * Previously, table was never deleted and CRITICAL_SECTION was never destroyed,
+     * causing memory and resource leaks.
+     */
+    ~HwndMap();
+
+    /**
      * Retrieves the value associated with the specified key in the map.
      *
      * @param key The HWND key.

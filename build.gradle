@@ -6,6 +6,7 @@ group 'xss.it'
 
 allprojects {
     version = '1.0.0'
+    java { toolchain { languageVersion = JavaLanguageVersion.of(25) }}
 }
 
 subprojects {

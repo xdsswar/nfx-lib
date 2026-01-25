@@ -7,12 +7,19 @@
 #include <windowsx.h>
 #include <dwmapi.h>
 #include <iostream>
+#include <mutex> // FIX: Issue #35 - Required for thread-safe initialization
 
 #include "utils/attach.h"
 #include "utils/HwndMap.h"
 #include "utils/NfxWinProc.h"
 
 #pragma comment(lib, "dwmapi.lib")
+
+/**
+ * FIX: Issue #35 - Mutex for thread-safe static initialization.
+ * std::once_flag ensures initializeJavaCallBacks runs exactly once across all threads.
+ */
+static std::once_flag initOnceFlag;
 
 
 /**
@@ -66,26 +73,81 @@ NfxWinProc::NfxWinProc() {
 }
 
 /**
+ * Internal implementation of Java callback initialization.
+ * This is called via std::call_once to ensure thread safety.
+ */
+static void doInitializeJavaCallBacks(JNIEnv *env, jobject obj, int &initialized,
+                                       jmethodID &onNcHitTestMID, jmethodID &isFullscreenMID,
+                                       jmethodID &isMaximizedMID, jmethodID &fireStateChangeMID,
+                                       jmethodID &onWmMouseLeaveMID) {
+    initialized = -1;
+
+    jclass cls = env->GetObjectClass(obj);
+    if (cls == nullptr) {
+        return; // Failed to get class
+    }
+
+    // FIX: Issue #17 - Check for exceptions after each GetMethodID
+    onNcHitTestMID = env->GetMethodID(cls, JNI_ON_NC_HIT_TEST_MDI, "(IIZ)I");
+    if (env->ExceptionCheck() || onNcHitTestMID == nullptr) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(cls);
+        return;
+    }
+
+    isFullscreenMID = env->GetMethodID(cls, JNI_IS_FULL_SCREEN_MDI, "()Z");
+    if (env->ExceptionCheck() || isFullscreenMID == nullptr) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(cls);
+        return;
+    }
+
+    isMaximizedMID = env->GetMethodID(cls, JNI_IS_MAXIMIZED_MDI, "()Z");
+    if (env->ExceptionCheck() || isMaximizedMID == nullptr) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(cls);
+        return;
+    }
+
+    fireStateChangeMID = env->GetMethodID(cls, JNI_FIRE_STATE_CHANGE_MDI, "()V");
+    if (env->ExceptionCheck() || fireStateChangeMID == nullptr) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(cls);
+        return;
+    }
+
+    onWmMouseLeaveMID = env->GetMethodID(cls, JNI_INVALIDATE_MDI, "()V");
+    if (env->ExceptionCheck() || onWmMouseLeaveMID == nullptr) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(cls);
+        return;
+    }
+
+    // FIX: Issue #10 - Delete local reference after use to prevent leak
+    env->DeleteLocalRef(cls);
+
+    initialized = 1;
+}
+
+/**
  * Initializes Java callbacks.
+ *
+ * FIX: Issue #10 - Now properly deletes local class reference after use.
+ * FIX: Issue #17 - Added exception checking after each GetMethodID call.
+ * FIX: Issue #35 - Now uses std::call_once for thread-safe initialization.
+ * Multiple threads calling this simultaneously will not cause race conditions.
  *
  * @param env The JNI environment
  * @param obj The Java object associated with the window
  */
 void NfxWinProc::initializeJavaCallBacks(JNIEnv *env, jobject obj) {
-    if (initialized) {
-        return;
-    }
-    initialized = -1;
-    jclass cls = env->GetObjectClass(obj);
-    onNcHitTestMID = env->GetMethodID(cls, JNI_ON_NC_HIT_TEST_MDI, "(IIZ)I");
-    isFullscreenMID = env->GetMethodID(cls, JNI_IS_FULL_SCREEN_MDI, "()Z");
-    isMaximizedMID = env->GetMethodID(cls, JNI_IS_MAXIMIZED_MDI, "()Z");
-    fireStateChangeMID = env->GetMethodID(cls, JNI_FIRE_STATE_CHANGE_MDI, "()V");
-    onWmMouseLeaveMID = env->GetMethodID(cls, JNI_INVALIDATE_MDI, "()V");
-    if (onNcHitTestMID != nullptr && isFullscreenMID != nullptr && fireStateChangeMID != nullptr
-        && onWmMouseLeaveMID != nullptr && isMaximizedMID != nullptr) {
-        initialized = 1;
-    }
+    // FIX: Issue #35 - Thread-safe initialization using std::call_once
+    std::call_once(initOnceFlag, [env, obj]() {
+        doInitializeJavaCallBacks(env, obj, initialized,
+                                   onNcHitTestMID, isFullscreenMID,
+                                   isMaximizedMID, fireStateChangeMID,
+                                   onWmMouseLeaveMID);
+    });
 }
 
 /**
@@ -120,11 +182,29 @@ HWND NfxWinProc::install(JNIEnv *env, jobject obj, HWND hWnd) {
     }
 
     env->GetJavaVM(&wp->jvm);
+
+    // FIX: Issue #18 - Check if NewGlobalRef succeeded
     wp->obj = env->NewGlobalRef(obj);
+    if (wp->obj == nullptr) {
+        // FIX: Issue #12 - Clean up on failure
+        hwndMap->remove(hWnd);
+        delete wp;
+        return nullptr;
+    }
+
     wp->hwnd = hWnd;
 
     // replace window procedure
     wp->defaultWndProc = reinterpret_cast<WNDPROC>(::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) StaticWindowProc));
+
+    // FIX: Validate SetWindowLongPtr succeeded
+    if (wp->defaultWndProc == nullptr && ::GetLastError() != 0) {
+        // Cleanup on failure
+        env->DeleteGlobalRef(wp->obj);
+        hwndMap->remove(hWnd);
+        delete wp;
+        return nullptr;
+    }
 
     /**
      *Forces a window update to apply changes
@@ -184,7 +264,11 @@ void NfxWinProc::uninstall(JNIEnv *env, jobject obj, HWND hWnd) {
  * @param full Indicates whether the window is in full-screen mode (true) or not (false).
  */
 void NfxWinProc::update(HWND hwnd, bool max, bool full) {
-    auto *wp = (NfxWinProc *) hwndMap->get(hwnd);
+    // FIX: Issue #36 - Check hwndMap before use
+    if (hwndMap == nullptr)
+        return;
+
+    auto *wp = static_cast<NfxWinProc *>(hwndMap->get(hwnd));
     if (wp != nullptr) {
         if (max || full) {
             wp->wmSizeWParam = SIZE_MAXIMIZED;
@@ -209,17 +293,32 @@ void NfxWinProc::update(HWND hwnd, bool max, bool full) {
  * @param g    The green component of the background color (0-255).
  * @param b    The blue component of the background color (0-255).
  */
+/**
+ * FIX: Issue #37 - Added null check for CreateSolidBrush return value.
+ * CreateSolidBrush can return nullptr on failure (e.g., out of GDI resources).
+ */
 void NfxWinProc::setWindowBackground(HWND hwnd, int r, int g, int b) {
-    auto *wp = (NfxWinProc *) hwndMap->get(hwnd);
+    // FIX: Issue #36 - Check hwndMap before use
+    if (hwndMap == nullptr)
+        return;
+
+    auto *wp = static_cast<NfxWinProc *>(hwndMap->get(hwnd));
     if (wp == nullptr)
         return;
 
-    // delete old background brush
+    // create new background brush first
+    // FIX: Issue #37 - Check if CreateSolidBrush succeeded before deleting old brush
+    HBRUSH newBrush = ::CreateSolidBrush(RGB(r, g, b));
+    if (newBrush == nullptr) {
+        // Creation failed, keep existing brush
+        return;
+    }
+
+    // delete old background brush only after new one is created
     if (wp->background != nullptr)
         ::DeleteObject(wp->background);
 
-    // create new background brush
-    wp->background = ::CreateSolidBrush(RGB(r, g, b));
+    wp->background = newBrush;
 }
 
 /**
@@ -232,8 +331,16 @@ void NfxWinProc::setWindowBackground(HWND hwnd, int r, int g, int b) {
  * @param lParam Additional message-specific information.
  * @return       The result of the message processing.
  */
+/**
+ * FIX: Issue #36 - Added null check for hwndMap to prevent crash if called before initialization.
+ */
 LRESULT CALLBACK NfxWinProc::StaticWindowProc(HWND hwnd, int uMsg, WPARAM wParam, LPARAM lParam) {
-    auto *wp = (NfxWinProc *) hwndMap->get(hwnd);
+    // FIX: Issue #36 - Check if hwndMap is initialized
+    if (hwndMap == nullptr) {
+        return ::DefWindowProc(hwnd, uMsg, wParam, lParam);
+    }
+
+    auto *wp = static_cast<NfxWinProc *>(hwndMap->get(hwnd));
     if (wp == nullptr)
         return 0;
     return wp->WindowProc(hwnd, uMsg, wParam, lParam);
@@ -324,6 +431,12 @@ LRESULT CALLBACK NfxWinProc::WindowProc(HWND hWnd, int uMsg, WPARAM wParam, LPAR
 /**
  * Handles the WM_DESTROY message to notify the window that it is being destroyed.
  *
+ * FIX: Issue #2 (Critical) - Restructured to avoid unsafe "delete this" pattern.
+ * The previous code called "delete this" and then continued using member variables,
+ * which is undefined behavior. Now we copy all needed values before deletion.
+ *
+ * FIX: Issue #11 - Added null check for getEnv() to prevent null pointer dereference.
+ *
  * @param hWnd   The handle to the window receiving the message.
  * @param uMsg   The message identifier (WM_DESTROY).
  * @param wParam Additional message-specific information.
@@ -331,19 +444,38 @@ LRESULT CALLBACK NfxWinProc::WindowProc(HWND hWnd, int uMsg, WPARAM wParam, LPAR
  * @return       The result of the message processing.
  */
 LRESULT NfxWinProc::WmDestroy(HWND hWnd, int uMsg, WPARAM wParam, LPARAM lParam) {
-    // restore original window procedure
-    ::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) defaultWndProc);
+    // FIX: Issue #2 - Copy all needed values BEFORE cleanup/deletion
+    WNDPROC savedDefaultWndProc = defaultWndProc;
+    jobject savedObj = obj;
+    HBRUSH savedBackground = background;
+    JavaVM* savedJvm = jvm;
 
-    WNDPROC defaultWndProc2 = defaultWndProc;
+    // Restore original window procedure first
+    ::SetWindowLongPtr(hWnd, GWLP_WNDPROC, (LONG_PTR) savedDefaultWndProc);
 
-    // cleanup
-    getEnv()->DeleteGlobalRef(obj);
-    if (background != nullptr)
-        ::DeleteObject(background);
+    // Remove from map before deletion
     hwndMap->remove(hWnd);
+
+    // FIX: Issue #11 - Safely get env and delete global ref
+    if (savedJvm != nullptr && savedObj != nullptr) {
+        JNIEnv* cleanupEnv = nullptr;
+        jint status = savedJvm->GetEnv((void**)&cleanupEnv, JNI_VERSION_1_2);
+        if (status == JNI_OK && cleanupEnv != nullptr) {
+            cleanupEnv->DeleteGlobalRef(savedObj);
+        }
+        // If not attached, the global ref will be cleaned up by JVM on shutdown
+    }
+
+    // Clean up GDI resources
+    if (savedBackground != nullptr) {
+        ::DeleteObject(savedBackground);
+    }
+
+    // FIX: Issue #2 - Now safe to delete because we've copied all values we need
     delete this;
 
-    return ::CallWindowProc(defaultWndProc2, hWnd, uMsg, wParam, lParam);
+    // Call original window procedure with saved pointer
+    return ::CallWindowProc(savedDefaultWndProc, hWnd, uMsg, wParam, lParam);
 }
 
 /**
@@ -400,16 +532,21 @@ LRESULT NfxWinProc::WmNcCalcSize(HWND hWnd, int uMsg, WPARAM wParam, LPARAM lPar
         UINT state = (UINT) ::SHAppBarMessage(ABM_GETSTATE, &autohide);
         if ((state & ABS_AUTOHIDE) != 0) {
             HMONITOR hMonitor = ::MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
-            MONITORINFO monitorInfo{0};
-            ::GetMonitorInfo(hMonitor, &monitorInfo);
-            if (hasAutoHideTaskbar(ABE_TOP, monitorInfo.rcMonitor))
-                params->rgrc[0].top++;
-            if (hasAutoHideTaskbar(ABE_BOTTOM, monitorInfo.rcMonitor))
-                params->rgrc[0].bottom--;
-            if (hasAutoHideTaskbar(ABE_LEFT, monitorInfo.rcMonitor))
-                params->rgrc[0].left++;
-            if (hasAutoHideTaskbar(ABE_RIGHT, monitorInfo.rcMonitor))
-                params->rgrc[0].right--;
+            // FIX: Issue #19 - Check if MonitorFromWindow returned valid handle
+            if (hMonitor != nullptr) {
+                MONITORINFO monitorInfo{0};
+                monitorInfo.cbSize = sizeof(MONITORINFO); // FIX: Initialize cbSize
+                if (::GetMonitorInfo(hMonitor, &monitorInfo)) {
+                    if (hasAutoHideTaskbar(ABE_TOP, monitorInfo.rcMonitor))
+                        params->rgrc[0].top++;
+                    if (hasAutoHideTaskbar(ABE_BOTTOM, monitorInfo.rcMonitor))
+                        params->rgrc[0].bottom--;
+                    if (hasAutoHideTaskbar(ABE_LEFT, monitorInfo.rcMonitor))
+                        params->rgrc[0].left++;
+                    if (hasAutoHideTaskbar(ABE_RIGHT, monitorInfo.rcMonitor))
+                        params->rgrc[0].right--;
+                }
+            }
         }
     } else if (!isMaximizedW && isFullscreen()) {
         // Set the client area to the full screen size proposed by the system
@@ -446,7 +583,11 @@ LRESULT NfxWinProc::WmNcHitTest(HWND hWnd, int uMsg, WPARAM wParam, LPARAM lPara
                                   ((::GetWindowLong(hWnd, GWL_STYLE) & WS_THICKFRAME) != 0);
 
     // 3) Convert PX -> DIP for Java
-    const UINT dpi = ::GetDpiForWindow(hWnd);
+    // FIX: Issue #3 - Handle case where GetDpiForWindow returns 0 (failure)
+    UINT dpi = ::GetDpiForWindow(hWnd);
+    if (dpi == 0) {
+        dpi = 96; // Default to standard DPI to prevent divide by zero
+    }
     const int xDip = px_to_dip(x, dpi);
     const int yDip = px_to_dip(y, dpi);
 
@@ -456,10 +597,16 @@ LRESULT NfxWinProc::WmNcHitTest(HWND hWnd, int uMsg, WPARAM wParam, LPARAM lPara
 /**
  * Retrieves the height of the resize handle used for resizing the window.
  *
+ * FIX: Issue #3 - Handle case where GetDpiForWindow returns 0.
+ *
  * @return The height of the resize handle.
  */
 int NfxWinProc::getResizeHandleHeight() {
     UINT dpi = ::GetDpiForWindow(hwnd);
+    // FIX: Issue #3 - Default to 96 DPI if GetDpiForWindow fails
+    if (dpi == 0) {
+        dpi = 96;
+    }
 
     return ::GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi)
            + ::GetSystemMetricsForDpi(SM_CYSIZEFRAME, dpi);
@@ -587,11 +734,23 @@ void NfxWinProc::fireStateChangedLaterOnce() {
  *
  * @return The Java environment pointer (JNIEnv) associated with the current thread.
  */
+/**
+ * FIX: Issue #38 - Added null check for jvm and proper error handling.
+ * GetEnv can fail if the thread is not attached; we now check the return value.
+ */
 JNIEnv *NfxWinProc::getEnv() {
     if (env != nullptr)
         return env;
 
-    jvm->GetEnv((void **) &env, JNI_VERSION_1_2);
+    // FIX: Issue #38 - Check if jvm is valid
+    if (jvm == nullptr)
+        return nullptr;
+
+    // FIX: Issue #38 - Check GetEnv return value
+    jint status = jvm->GetEnv((void **) &env, JNI_VERSION_1_2);
+    if (status != JNI_OK) {
+        env = nullptr; // Ensure env is null on failure
+    }
     return env;
 }
 
@@ -630,12 +789,19 @@ LRESULT NfxWinProc::screenToWindowCoordinates(HWND hwnd, LPARAM lParam) {
 /**
  * Opens the system menu at the specified coordinates relative to the given window.
  *
+ * FIX: Issue #20 - Added null check for GetSystemMenu return value.
+ *
  * @param hwnd The handle to the window where the system menu should be opened.
  * @param x    The x-coordinate of the position where the system menu should be opened.
  * @param y    The y-coordinate of the position where the system menu should be opened.
  */
 void NfxWinProc::openSystemMenu(HWND hwnd, int x, int y) {
     HMENU systemMenu = ::GetSystemMenu(hwnd, false);
+
+    // FIX: Issue #20 - Check if GetSystemMenu returned valid handle
+    if (systemMenu == nullptr) {
+        return;
+    }
 
     LONG style = ::GetWindowLong(hwnd, GWL_STYLE);
     bool isMaximized = ::IsZoomed(hwnd);
@@ -680,6 +846,9 @@ void NfxWinProc::setMenuItemState(HMENU systemMenu, int item, bool enabled) {
 /**
  * Hides or shows the window in the taskbar.
  *
+ * FIX: Issue #16 - Fixed GetWindowLong error checking. A return value of 0
+ * could be a valid style, so we must use GetLastError to detect actual errors.
+ *
  * @param hWnd   The handle of the window to hide
  * @param hidden True to hide the window from the taskbar, false to show it
  */
@@ -687,9 +856,16 @@ extern "C"
 JNIEXPORT void JNICALL Java_xss_it_nfx_AbstractNfxUndecoratedWindow_hideFromTaskBar
 (JNIEnv *env, jobject obj, jlong hWnd, jboolean hidden) {
     HWND hwnd = to_hwnd(hWnd);
+    if (hwnd == nullptr) {
+        return;
+    }
 
+    // FIX: Issue #16 - Proper error checking for GetWindowLong
+    // SetLastError(0) first, then check GetLastError after the call
+    ::SetLastError(0);
     LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-    if (exStyle == 0) {
+    if (exStyle == 0 && ::GetLastError() != 0) {
+        // Actual error occurred
         return;
     }
 

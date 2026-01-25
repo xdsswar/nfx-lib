@@ -16,18 +16,70 @@ HWND to_hwnd(const jlong hwnd) {
 
 /**
  * Obtain the raw handle from a javafx Stage
- * @return
+ *
+ * FIX: Issue #9 - Now properly releases JNI local references to prevent memory leaks.
+ * FindClass and CallObjectMethod return local references that must be deleted.
+ *
+ * @return The native window handle, or 0L on error
  */
 jlong get_hwnd_from_javafx_stage(JNIEnv *env, jobject window) {
-    if (window == nullptr) {
+    if (window == nullptr || env == nullptr) {
         return 0L;
     }
+
+    jlong hwnd = 0L;
+
+    // Find Window class
     jclass stageClass = env->FindClass("javafx/stage/Window");
+    if (stageClass == nullptr || env->ExceptionCheck()) {
+        env->ExceptionClear();
+        return 0L;
+    }
+
     jmethodID getPeerMethod = env->GetMethodID(stageClass, "getPeer", "()Lcom/sun/javafx/tk/TKStage;");
+    if (getPeerMethod == nullptr || env->ExceptionCheck()) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(stageClass); // FIX: Issue #9 - Clean up local ref
+        return 0L;
+    }
+
+    // Find TKStage class
     jclass tkStageClass = env->FindClass("com/sun/javafx/tk/TKStage");
+    if (tkStageClass == nullptr || env->ExceptionCheck()) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(stageClass); // FIX: Issue #9 - Clean up local ref
+        return 0L;
+    }
+
     jmethodID getRawHandleMethod = env->GetMethodID(tkStageClass, "getRawHandle", "()J");
+    if (getRawHandleMethod == nullptr || env->ExceptionCheck()) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(tkStageClass); // FIX: Issue #9 - Clean up local ref
+        env->DeleteLocalRef(stageClass);
+        return 0L;
+    }
+
+    // Get peer object
     jobject tkStageObject = env->CallObjectMethod(window, getPeerMethod);
-    jlong hwnd = env->CallLongMethod(tkStageObject, getRawHandleMethod);
+    if (tkStageObject == nullptr || env->ExceptionCheck()) {
+        env->ExceptionClear();
+        env->DeleteLocalRef(tkStageClass);
+        env->DeleteLocalRef(stageClass);
+        return 0L;
+    }
+
+    // Get raw handle
+    hwnd = env->CallLongMethod(tkStageObject, getRawHandleMethod);
+    if (env->ExceptionCheck()) {
+        env->ExceptionClear();
+        hwnd = 0L;
+    }
+
+    // FIX: Issue #9 - Clean up all local references
+    env->DeleteLocalRef(tkStageObject);
+    env->DeleteLocalRef(tkStageClass);
+    env->DeleteLocalRef(stageClass);
+
     return hwnd;
 }
 

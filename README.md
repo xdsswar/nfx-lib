@@ -1,124 +1,266 @@
-# nfx-core for Windows
+# NFX Library for Windows
 
-**nfx-core v 1.0.3** is a JavaFX/JNI library for Windows 10/11 (validated on Windows 11) that lets you build fully custom, native‑feeling window chrome: title bar, buttons, and frame behavior.
+**nfx-core v1.0.5** is a JavaFX/JNI library for Windows 10/11 that enables fully custom, native-feeling window chrome with title bar customization, window controls, and native frame behavior.
 
 ## Requirements
-- Windows **10 or later**
-- JavaFX 21+
-- Per‑monitor DPI awareness (PMv2) recommended
+
+| Requirement | Version |
+|-------------|---------|
+| **OS** | Windows 10 or later |
+| **Java** | 25+ |
+| **JavaFX** | 21+ |
+| **DPI** | Per-monitor DPI awareness (PMv2) recommended |
 
 ## Features
 
-- **Native behavior**
-    - Correct non‑client hit testing; system menu, move/resize, and drag zones behave like real Windows windows.
-- **Windows 11 Snap Layouts**
-    - Full snap‑layout support on Win11; automatic native tooltips fallback on Win10.
-- **Native tooltips**
-    - Uses Windows tooltips for a consistent look & feel.
-- **Full customization from JavaFX**
-    - All decoration elements are styled and controlled from the FX side.
-- **Easy theming**
-    - New CSS pseudo‑classes for window controls make styling trivial.
-- **Caption color**
-  ```java
-  setCaptionColor("#D35400");
-  setCaptionColor(Color.RED);
-  ```
-- **New: `NfxStage` (abstract base)**
-    - High‑performance hit testing via cached `HitSpot`s (map‑backed), immutable snapshots, and per‑control wiring (close / maximize / minimize).
-    - Per‑Region client‑area spots with automatic `:ht-client` pseudo toggling for CSS.
+### Native Windows Integration
 
-## `NfxStage` in a nutshell
+- **Native Hit Testing** - System menu, move/resize, and drag zones behave like real Windows windows
+- **Windows 11 Snap Layouts** - Full snap-layout support with automatic fallback on Windows 10
+- **Native Tooltips** - Uses Windows tooltips for consistent look & feel
+- **DWM Customization** - Title bar color, caption color, corner preference, and border color
 
-- API surface:
-    - `addClientAreas(Region...)` / `removeClientAreas(Region...)`
-    - `setCloseControl(Control)` / `setMaxControl(Control)` / `setMinControl(Control)`
-    - `protected double getTitleBarHeight()` (return DIP)
-- Internals (you don’t have to touch these):
-    - Identity‑based cache: `Map<Region, HitSpot>` so each Region has **one** `HitSpot` (no listener churn).
-    - Immutable snapshot list for `getHitSpots()`; rebuilt only when inputs change.
-    - `:ht-client`, `:ht-close`, `:ht-max`, `:ht-min` pseudo‑classes are toggled automatically during hit‑testing.
+### JavaFX Integration
 
-### Minimal usage
+- **Full Customization** - All decoration elements styled and controlled from JavaFX
+- **CSS Pseudo-Classes** - Native hover states exposed via `:ht-close`, `:ht-max`, `:ht-min`, `:ht-client`
+- **Observable Properties** - All DWM attributes are bindable JavaFX properties
+- **Thread-Safe** - Proper synchronization between native and FX threads
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Your Application                      │
+├─────────────────────────────────────────────────────────────┤
+│  NfxStage (concrete)                                        │
+│    └── Hit spot management, control registration            │
+├─────────────────────────────────────────────────────────────┤
+│  AbstractNfxUndecoratedWindow                               │
+│    └── JNI callbacks, state sync, native hooks              │
+├─────────────────────────────────────────────────────────────┤
+│  NfxWindow                                                  │
+│    └── DWM properties (title bar, caption, corners, border) │
+├─────────────────────────────────────────────────────────────┤
+│  NfxUtil + Native DLL                                       │
+│    └── JNI bridge, DWM API calls, WndProc subclassing       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Quick Start
+
+### 1. Extend NfxStage
 
 ```java
-public final class MyWindow extends NfxStage implements Initializable {
-  @FXML private Button closeBtn, maxBtn, minBtn;
-  @FXML private SVGPath maxShape;
+public class MyWindow extends NfxStage implements Initializable {
+    @FXML private MenuBar menuBar;
+    @FXML private TextField searchBox;
+    @FXML private Button closeBtn, maxBtn, minBtn;
 
-  @Override protected double getTitleBarHeight() { return 40; }
+    @Override
+    protected double getTitleBarHeight() {
+        return 40;
+    }
 
-  @Override public void initialize(URL u, ResourceBundle r) {
-    addClientAreas(titleBar);
-    setCloseControl(closeBtn);
-    setMaxControl(maxBtn);
-    setMinControl(minBtn);
-    // Style classes on buttons/graphics for CSS hooks
-    closeBtn.getStyleClass().add("hit-btn");
-    maxBtn.getStyleClass().add("hit-btn");
-    minBtn.getStyleClass().add("hit-btn");
-    if (maxShape != null) maxShape.getStyleClass().add("shape");
-  }
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        // Register interactive controls in title bar (receive mouse events instead of triggering drag)
+        addClientAreas(menuBar, searchBox);
+
+        // Register window control buttons
+        setCloseControl(closeBtn);
+        setMaxControl(maxBtn);
+        setMinControl(minBtn);
+    }
 }
 ```
 
-## Styling the window buttons
+### 2. Customize Window Appearance
 
-Use the custom pseudo‑classes emitted by `NfxStage` + `HitSpot` to drive your styles.
+```java
+MyWindow window = new MyWindow();
+
+// Title bar background color
+window.setTitleBarColor(Color.web("#1a1a2e"));
+
+// Title text color
+window.setCaptionColor(Color.WHITE);
+
+// Window corner style (Windows 11)
+window.setCornerPreference(CornerPreference.ROUND);
+
+// Window border color
+window.setWindowBorder(Color.web("#333333"));
+
+window.show();
+```
+
+### 3. Style with CSS
 
 ```css
-/* Close button background on hover/active */
-.close:ht-close {
-  -fx-background-color: #C42B1C;
+/* Close button - Windows red on hover */
+.close-btn:ht-close {
+    -fx-background-color: #C42B1C;
+}
+.close-btn:ht-close .icon {
+    -fx-fill: white;
 }
 
-/* Close button icon (e.g., SVGPath with style class 'shape') */
-.close:ht-close > .shape {
-  -fx-fill: white;
+/* Maximize/Minimize hover effect */
+.window-btn:ht-max,
+.window-btn:ht-min {
+    -fx-background-color: rgba(150, 150, 150, 0.32);
 }
 
-/* Minimize / Maximize hover cues */
-.hit-btn:ht-min,
-.hit-btn:ht-max {
-  -fx-background-color: rgba(150,150,150,0.32);
+/* Client area hover (interactive controls in title bar) */
+.title-control:ht-client {
+    -fx-opacity: 1.0;
 }
 ```
 
-See the bundled `nfx-window.css` for a ready‑to‑use stylesheet.
+## API Reference
 
-## Native / Rendering updates
+### NfxWindow Properties
 
-- **Per‑monitor DPI correctness**
-    - Native converts px↔DIP using `GetDpiForWindow`. Java callbacks receive **DIP**.
-- **Hit‑test pipeline**
-    - `WM_NCHITTEST` collects screen→client px, converts to DIP, calls Java `jniHitTest(xDip, yDip, isOnResizeBorder)`.
-    - Spots win over the top resize strip inside the title bar; 1–2 DIP inflation on edges avoids “rim” misses.
-- **No listener churn**
-    - Map‑backed `HitSpot` cache per Region/Control; immutable snapshot for hot‑path reads.
-- **JNI robustness**
-    - Thread attach pattern via `JniAttachGuard` (attach if needed; detach only if attached here). Exception checks cleared.
+| Property | Type | Description |
+|----------|------|-------------|
+| `titleBarColor` | `Color` | Title bar background color (DWMWA_CAPTION_COLOR) |
+| `captionColor` | `Color` | Title text color (DWMWA_TEXT_COLOR) |
+| `cornerPreference` | `CornerPreference` | Corner rounding style (Windows 11) |
+| `windowBorder` | `Color` | Window border color (DWMWA_BORDER_COLOR) |
+
+### NfxStage Methods
+
+| Method | Description |
+|--------|-------------|
+| `addClientAreas(Region...)` | Register interactive controls in title bar (receive mouse events instead of triggering window drag) |
+| `removeClientAreas(Region...)` | Unregister client-area regions |
+| `setCloseControl(Control)` | Assign the close button control |
+| `setMaxControl(Control)` | Assign the maximize/restore button control |
+| `setMinControl(Control)` | Assign the minimize button control |
+| `getTitleBarHeight()` | Return the title bar height in DIP (override this) |
+
+### AbstractNfxUndecoratedWindow Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `windowState` | `WindowState` | Current window state (NORMAL, MAXIMIZED, MINIMIZED, FULL_SCREEN) |
+| `hideFromTaskBar` | `boolean` | Whether to hide window from taskbar |
+
+### CornerPreference Enum
+
+| Value | Description | DWM Constant |
+|-------|-------------|--------------|
+| `DEFAULT` | System default | DWMWCP_DEFAULT |
+| `NOT_ROUND` | Square corners | DWMWCP_DONOTROUND |
+| `ROUND` | Standard rounded (8px) | DWMWCP_ROUND |
+| `ROUND_SMALL` | Small rounded | DWMWCP_ROUNDSMALL |
+
+### CSS Pseudo-Classes
+
+| Pseudo-Class | Applied When |
+|--------------|--------------|
+| `:ht-close` | Native hover over close button region |
+| `:ht-max` | Native hover over maximize button region |
+| `:ht-min` | Native hover over minimize button region |
+| `:ht-client` | Native hover over client area region |
+
+## Window State Management
+
+```java
+// Listen for state changes
+window.windowStateProperty().addListener((obs, oldState, newState) -> {
+    switch (newState) {
+        case MAXIMIZED -> updateMaximizeIcon(true);
+        case NORMAL -> updateMaximizeIcon(false);
+        case MINIMIZED -> { /* minimized */ }
+        case FULL_SCREEN -> { /* fullscreen */ }
+    }
+});
+
+// Programmatic state changes
+window.setWindowState(WindowState.MAXIMIZED);
+window.setWindowState(WindowState.NORMAL);
+```
+
+## HitSpot System
+
+HitSpots define interactive regions in the title bar for native Windows integration:
+
+```java
+// Manual HitSpot creation (advanced usage)
+HitSpot customSpot = HitSpot.builder()
+    .window(this)
+    .control(myCustomButton)
+    .systemMenu(true)  // or .close(true), .maximize(true), .minimize(true)
+    .build();
+
+// Listen for native hover
+customSpot.hoveredProperty().addListener((obs, was, is) -> {
+    myCustomButton.pseudoClassStateChanged(PseudoClass.getPseudoClass("native-hover"), is);
+});
+```
+
+## Native Library
+
+The native DLL is automatically extracted to `~/.nfx-libs/` on first use:
+
+```
+~/.nfx-libs/nfx-core-win64-1.0.5.dll
+```
+
+### Building Native Code
+
+See `nfx-core/src/native/README.md` for build instructions.
 
 ## Examples
 
-See `demo/src/main/java/xss/it/demo/Demo.java` for an interactive demo.
+See `demo/src/main/java/xss/it/demo/Demo.java` for an interactive demonstration.
 
 ## Screenshots
 
-1. **NfxWindow Example**  
-   ![NfxWindow Example](screenshots/1.png)
+| Description | Preview |
+|-------------|---------|
+| NfxWindow Example | ![NfxWindow](screenshots/1.png) |
+| Custom Window (AbstractNfxUndecoratedWindow) | ![Custom Window](screenshots/2.png) |
+| Custom Dialog (taskbar hide/show) | ![Custom Dialog](screenshots/3.png) |
+| MenuWindow Demo | ![Menu Window](screenshots/4.png) |
 
-2. **Custom Window**  
-   Extending from `AbstractNfxUndecoratedWindow`  
-   ![Custom Window](screenshots/2.png)
+## Version History
 
-3. **Custom Dialog**  
-   Demonstrates a custom dialog that can be hidden or shown in the taskbar  
-   ![Custom Dialog](screenshots/3.png)
+### 1.0.5
+- **Thread Safety Fixes**: Proper synchronization for JNI callbacks and property access
+- **Memory Leak Fixes**: Listener cleanup on window hide/show cycles
+- **Bug Fixes**: Color conversion, directory creation, resource handling
+- **Documentation**: Comprehensive Javadoc for all public APIs
 
-4. **Custom Dialog**  
-   MenuWindow Demo  
-   ![Custom Dialog](screenshots/4.png)
+### 1.0.4
+- Minor fixes and improvements
 
-## Important Note
+### 1.0.3
+- Initial public release
 
-To ensure efficient support, please provide a minimal reproducible code example when reporting issues. We prioritize issues that include such code to help diagnose and address concerns effectively.
+## Troubleshooting
+
+### Window controls not responding to hover
+Ensure you've registered controls with `setCloseControl()`, `setMaxControl()`, `setMinControl()`.
+
+### Snap Layouts not appearing (Windows 11)
+Verify the maximize button is registered and its bounds are correct. Call `refresh()` after layout changes.
+
+### Native library not loading
+Check that `~/.nfx-libs/` is writable and not blocked by antivirus software.
+
+## Support
+
+When reporting issues, please include:
+1. Windows version (10/11 + build number)
+2. Java/JavaFX version
+3. Minimal reproducible code example
+4. Stack trace (if applicable)
+
+## License
+
+MIT License - Free for any use, commercial or personal.
+
+See [LICENSE](LICENSE) file for details.
