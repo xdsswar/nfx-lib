@@ -99,8 +99,7 @@ import javafx.scene.layout.Region;
  * @author XDSSWAR
  * @version 1.0.5
  * @since 1.0.0
- * @see AbstractNfxUndecoratedWindow#registerHitSpot(HitSpot)
- * @see AbstractNfxUndecoratedWindow#unregisterHitSpot(HitSpot)
+ * @see NfxStage#addClientAreas(Region...)
  * @see NfxStage#getHitSpots()
  */
 public final class HitSpot {
@@ -166,18 +165,11 @@ public final class HitSpot {
      */
     private final boolean client;
 
-    /**
+    /*
      * Observable property tracking whether the native hover state is active.
-     * <p>
      * This property is updated by the native layer when Windows sends hover
      * messages (WM_NCMOUSEMOVE, WM_NCMOUSELEAVE) over the HitSpot region.
-     * JavaFX controls can bind to this property for synchronized visual feedback
-     * that matches the native hover state.
-     * </p>
-     * <p>
-     * Lazy-initialized on first access to avoid unnecessary object creation
-     * for HitSpots that don't require hover tracking.
-     * </p>
+     * Lazy-initialized on first access.
      */
     private BooleanProperty hovered;
 
@@ -333,7 +325,7 @@ public final class HitSpot {
 
     /**
      * Returns the Rectangle2D representing the bounds of the HitSpot in the scene coordinates.
-     * FIX: Issue #4 & #9 - Added null checks and defensive programming.
+     * FIX: Issue #4 &amp; #9 - Added null checks and defensive programming.
      *
      * @return The Rectangle2D representing the bounds of the HitSpot.
      * @throws NullPointerException if control or window is null (use getRectSafe() for null-safe access)
@@ -414,7 +406,7 @@ public final class HitSpot {
      * and will cause construction to fail if not provided.
      * </p>
      *
-     * <h3>Usage Example</h3>
+     * <h2>Usage Example</h2>
      * <pre>{@code
      * HitSpot closeButton = HitSpot.builder()
      *     .window(myNfxStage)
@@ -423,7 +415,7 @@ public final class HitSpot {
      *     .build();
      * }</pre>
      *
-     * <h3>Type Exclusivity</h3>
+     * <h2>Type Exclusivity</h2>
      * <p>
      * While multiple type flags (close, maximize, minimize, systemMenu) can technically
      * be set, it's recommended to set only one per HitSpot for predictable behavior.

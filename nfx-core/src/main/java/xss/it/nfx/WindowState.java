@@ -79,11 +79,9 @@ public enum WindowState {
      *   <li>Occupies its user-defined or default size and position</li>
      *   <li>Shows standard window chrome (if not undecorated)</li>
      * </ul>
-     * </p>
      * <p>
      * This is typically the initial state when a window is first shown, unless
      * specifically configured otherwise.
-     * </p>
      */
     NORMAL,
 
@@ -97,11 +95,9 @@ public enum WindowState {
      *   <li>Retains its previous state (NORMAL, MAXIMIZED) for restoration</li>
      *   <li>Does not receive mouse or keyboard input directly</li>
      * </ul>
-     * </p>
      * <p>
      * When restored from MINIMIZED, the window returns to its previous state
      * (either NORMAL or MAXIMIZED), tracked internally via {@code prevState}.
-     * </p>
      *
      * @see AbstractNfxUndecoratedWindow#prevState
      */
@@ -118,11 +114,9 @@ public enum WindowState {
      *   <li>Cannot be moved by dragging the title bar</li>
      *   <li>May have adjusted corner rendering (no rounded corners)</li>
      * </ul>
-     * </p>
      * <p>
      * The native side sends {@code WM_NCCALCSIZE} to adjust the client area
      * appropriately when entering/exiting this state.
-     * </p>
      */
     MAXIMIZED,
 
@@ -137,11 +131,9 @@ public enum WindowState {
      *   <li>May disable DWM composition for better performance</li>
      *   <li>Is ideal for games, video players, and presentations</li>
      * </ul>
-     * </p>
      * <p>
      * Unlike MAXIMIZED, FULL_SCREEN completely hides system UI elements and
      * provides the application with full control over the display.
-     * </p>
      */
     FULL_SCREEN
 }

@@ -621,9 +621,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
         }
     }
 
-    /**
-     * Property indicating whether the window should be shown in the taskbar.
-     */
+    // Property indicating whether the window should be shown in the taskbar.
     private BooleanProperty hideFromTaskBar;
 
     /**
@@ -658,9 +656,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
     }
 
 
-    /**
-     * Property representing the window's background color.
-     */
+    // Property representing the window's background color.
     private ObjectProperty<Color> windowBackground;
 
     /**
@@ -694,9 +690,7 @@ public abstract class AbstractNfxUndecoratedWindow extends NfxWindow {
         this.windowBackgroundProperty().set(windowBackground);
     }
 
-    /**
-     * Property representing the state of the window.
-     */
+    // Property representing the state of the window.
     private ObjectProperty<WindowState> windowState;
 
     /**

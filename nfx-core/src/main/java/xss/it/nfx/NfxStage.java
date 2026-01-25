@@ -310,10 +310,8 @@ public abstract class NfxStage extends AbstractNfxUndecoratedWindow {
      *
      * @param areas one or more regions to include in hit testing; nulls are ignored
      */
-    /**
-     * FIX: Issue #26 - Synchronize spotsDirty writes to prevent race conditions.
-     * All writes to spotsDirty must happen inside synchronized(snapshotLock).
-     */
+    // FIX: Issue #26 - Synchronize spotsDirty writes to prevent race conditions.
+    // All writes to spotsDirty must happen inside synchronized(snapshotLock).
     protected void addClientAreas(Region... areas){
         for (Region area : areas) {
             if (!hitRegions.contains(area)) {
@@ -334,9 +332,7 @@ public abstract class NfxStage extends AbstractNfxUndecoratedWindow {
      *
      * @param areas regions to remove; nulls are ignored
      */
-    /**
-     * FIX: Issue #26 - Synchronize spotsDirty writes to prevent race conditions.
-     */
+    // FIX: Issue #26 - Synchronize spotsDirty writes to prevent race conditions.
     protected void removeClientAreas(Region... areas){
         for (Region area : areas) {
             if (hitRegions.remove(area)) {

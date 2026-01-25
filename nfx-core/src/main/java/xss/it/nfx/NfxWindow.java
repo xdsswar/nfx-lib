@@ -112,16 +112,11 @@ import javafx.util.Duration;
  */
 public class NfxWindow extends Stage {
 
-    /**
+    /*
      * Property holding the NfxUtil instance for this window.
-     * <p>
      * The NfxUtil instance provides access to native DWM APIs for customizing the window.
      * It is created lazily when the window is first shown, as a native window handle is
      * required for its construction.
-     * </p>
-     * <p>
-     * This property can be observed to detect when native functionality becomes available.
-     * </p>
      */
     private final ObjectProperty<NfxUtil> nfxUtil;
 
@@ -413,13 +408,9 @@ public class NfxWindow extends Stage {
      * =================================================================================================================
      */
 
-    /**
-     * Property holding the title bar background color.
-     * <p>
-     * Changes to this property are automatically synchronized with the native DWM attribute
-     * when the window is shown.
-     * </p>
-     */
+    // Property holding the title bar background color.
+    // Changes to this property are automatically synchronized with the native DWM attribute
+    // when the window is shown.
     private ObjectProperty<Color> titleBarColor;
 
     /**
@@ -480,9 +471,7 @@ public class NfxWindow extends Stage {
      * =================================================================================================================
      */
 
-    /**
-     * Property holding the caption (title text) color.
-     */
+    // Property holding the caption (title text) color.
     private ObjectProperty<Color> captionColor;
 
     /**
@@ -543,9 +532,7 @@ public class NfxWindow extends Stage {
      * =================================================================================================================
      */
 
-    /**
-     * Property holding the window corner preference.
-     */
+    // Property holding the window corner preference.
     private ObjectProperty<CornerPreference> cornerPreference;
 
     /**
@@ -595,9 +582,7 @@ public class NfxWindow extends Stage {
      * =================================================================================================================
      */
 
-    /**
-     * Property holding the window border color.
-     */
+    // Property holding the window border color.
     private ObjectProperty<Color> windowBorder;
 
     /**

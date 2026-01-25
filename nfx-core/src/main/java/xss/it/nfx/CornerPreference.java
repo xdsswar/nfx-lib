@@ -36,6 +36,7 @@ package xss.it.nfx;
  *
  * <h2>DWM Mapping</h2>
  * <table border="1">
+ *   <caption>Java enum to DWM constant mapping</caption>
  *   <tr><th>Java Enum</th><th>DWM Constant</th><th>Value</th></tr>
  *   <tr><td>DEFAULT</td><td>DWMWCP_DEFAULT</td><td>0</td></tr>
  *   <tr><td>NOT_ROUND</td><td>DWMWCP_DONOTROUND</td><td>1</td></tr>
